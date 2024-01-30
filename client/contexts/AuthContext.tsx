@@ -1,0 +1,223 @@
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { User, AuthResponse } from "@shared/api";
+
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<AuthResponse>;
+  register: (userData: {
+    email: string;
+    password: string;
+    phone: string;
+    firstName: string;
+    lastName: string;
+  }) => Promise<AuthResponse>;
+  logout: () => void;
+  isAuthenticated: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
+
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check for existing auth on app load
+    const savedToken = localStorage.getItem("investnaija_token");
+    if (savedToken) {
+      setToken(savedToken);
+
+      // Verify token with server with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      fetch("/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${savedToken}`,
+        },
+        signal: controller.signal,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.user) {
+            setUser(data.user);
+          } else {
+            // Invalid token, remove it
+            localStorage.removeItem("investnaija_token");
+            setToken(null);
+          }
+        })
+        .catch(() => {
+          // Error verifying token or timeout
+          localStorage.removeItem("investnaija_token");
+          setToken(null);
+        })
+        .finally(() => {
+          clearTimeout(timeoutId);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<AuthResponse> => {
+    try {
+      console.log("Attempting login with:", {
+        email,
+        endpoint: "/api/auth/login",
+      });
+
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      console.log("Login response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(
+          "Login failed with status:",
+          response.status,
+          "Error:",
+          errorText,
+        );
+
+        try {
+          const errorData = JSON.parse(errorText);
+          return {
+            success: false,
+            message:
+              errorData.message ||
+              errorData.error ||
+              `Server error: ${response.status}`,
+          };
+        } catch {
+          return {
+            success: false,
+            message: `Server error: ${response.status} - ${errorText}`,
+          };
+        }
+      }
+
+      const data: AuthResponse = await response.json();
+      console.log("Login response data:", {
+        success: data.success,
+        hasUser: !!data.user,
+        hasToken: !!data.token,
+      });
+
+      // Return the response data regardless of status - let the component handle the error
+      if (data.success && data.user && data.token) {
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem("investnaija_token", data.token);
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Login network error:", error);
+
+      // Check if it's a network connectivity issue
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        return {
+          success: false,
+          message:
+            "Unable to connect to server. Please check your internet connection.",
+        };
+      }
+
+      return {
+        success: false,
+        message: `Network error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      };
+    }
+  };
+
+  const register = async (userData: {
+    email: string;
+    password: string;
+    phone: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<AuthResponse> => {
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data: AuthResponse = await response.json();
+
+      // Return the response data regardless of status - let the component handle the error
+      if (data.success && data.user && data.token) {
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem("investnaija_token", data.token);
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Registration network error:", error);
+      return {
+        success: false,
+        message: "Network error occurred. Please check your connection.",
+      };
+    }
+  };
+
+  const logout = () => {
+    // Optional: call logout endpoint
+    if (token) {
+      fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }).catch(() => {
+        // Ignore error, we're logging out anyway
+      });
+    }
+
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem("investnaija_token");
+  };
+
+  const value: AuthContextType = {
+    user,
+    token,
+    loading,
+    login,
+    register,
+    logout,
+    isAuthenticated: !!user && !!token,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
