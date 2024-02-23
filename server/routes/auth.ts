@@ -208,3 +208,4 @@ export const getCurrentUser: RequestHandler = (req, res) => {
     } as ErrorResponse);
   }
 };
+// Commit 20 - 1752188002
