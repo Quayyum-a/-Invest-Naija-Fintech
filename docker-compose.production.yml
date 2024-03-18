@@ -1,0 +1,248 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: investnaija-db
+    environment:
+      POSTGRES_DB: investnaija
+      POSTGRES_USER: investnaija_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - investnaija-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U investnaija_user -d investnaija"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: investnaija-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - investnaija-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # InvestNaija Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: investnaija-app
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+      # Database Configuration
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: investnaija
+      DB_USER: investnaija_user
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      # Security
+      JWT_SECRET: ${JWT_SECRET}
+      CARD_ENCRYPTION_KEY: ${CARD_ENCRYPTION_KEY}
+      CVV_ENCRYPTION_KEY: ${CVV_ENCRYPTION_KEY}
+
+      # Payment Gateways
+      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY}
+      PAYSTACK_PUBLIC_KEY: ${PAYSTACK_PUBLIC_KEY}
+      FLUTTERWAVE_SECRET_KEY: ${FLUTTERWAVE_SECRET_KEY}
+      FLUTTERWAVE_PUBLIC_KEY: ${FLUTTERWAVE_PUBLIC_KEY}
+
+      # KYC Providers
+      VERIFYME_API_KEY: ${VERIFYME_API_KEY}
+      SMILE_PARTNER_ID: ${SMILE_PARTNER_ID}
+      SMILE_API_KEY: ${SMILE_API_KEY}
+      SMILE_SIGNATURE: ${SMILE_SIGNATURE}
+      PREMBLY_API_KEY: ${PREMBLY_API_KEY}
+
+      # Communication Services
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      TERMII_API_KEY: ${TERMII_API_KEY}
+      FIREBASE_SERVER_KEY: ${FIREBASE_SERVER_KEY}
+
+      # External APIs
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+      COINGECKO_API_KEY: ${COINGECKO_API_KEY}
+
+      # Application Settings
+      FRONTEND_URL: ${FRONTEND_URL}
+      API_BASE_URL: ${API_BASE_URL}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+
+    ports:
+      - "3000:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - investnaija-network
+    restart: unless-stopped
+    volumes:
+      - app_logs:/app/logs
+      - app_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: investnaija-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/sites-available:/etc/nginx/sites-available
+      - ./ssl:/etc/nginx/ssl
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - app
+    networks:
+      - investnaija-network
+    restart: unless-stopped
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: investnaija-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - investnaija-network
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+
+  # Grafana for Monitoring Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: investnaija-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - investnaija-network
+    restart: unless-stopped
+
+  # Log aggregation with ELK Stack
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: investnaija-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - investnaija-network
+    restart: unless-stopped
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: investnaija-logstash
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
+      - app_logs:/app/logs:ro
+      - nginx_logs:/nginx/logs:ro
+    depends_on:
+      - elasticsearch
+    networks:
+      - investnaija-network
+    restart: unless-stopped
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: investnaija-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - investnaija-network
+    restart: unless-stopped
+
+  # Backup Service
+  backup:
+    image: postgres:15-alpine
+    container_name: investnaija-backup
+    environment:
+      PGPASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup.sh:/backup.sh
+    command: ["sh", "-c", "chmod +x /backup.sh && crond -f"]
+    depends_on:
+      - database
+    networks:
+      - investnaija-network
+    restart: unless-stopped
+
+networks:
+  investnaija-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  app_logs:
+    driver: local
+  app_uploads:
+    driver: local
+  nginx_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
