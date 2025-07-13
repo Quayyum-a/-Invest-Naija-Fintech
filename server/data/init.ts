@@ -34,6 +34,14 @@ export const initializeApp = async () => {
     );
   }
 
+  // Initialize sample financial challenges
+  try {
+    const { createSampleChallenges } = await import("./storage");
+    createSampleChallenges?.();
+  } catch (error) {
+    console.log("Sample challenges may already exist");
+  }
+
   console.log("🚀 InvestNaija application initialized successfully!");
   console.log("");
   console.log("Next steps:");
