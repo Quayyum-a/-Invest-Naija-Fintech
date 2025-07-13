@@ -16,6 +16,8 @@ import {
   createInvestment,
   updateTransaction,
 } from "../data/storage";
+import { walletService } from "../services/walletService";
+import { paymentsService } from "../services/paymentsService";
 
 export const getWallet: RequestHandler = (req, res) => {
   try {
