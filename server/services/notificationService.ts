@@ -18,12 +18,13 @@ export class NotificationService {
   private emailTransporter: nodemailer.Transporter;
 
   constructor(server: HTTPServer) {
-    this.io = new SocketIOServer(server, {
-      cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:5173",
-        methods: ["GET", "POST"],
-      },
-    });
+    // TODO: Enable socket.io when package is installed
+    // this.io = new SocketIOServer(server, {
+    //   cors: {
+    //     origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    //     methods: ["GET", "POST"],
+    //   },
+    // });
 
     // Initialize email transporter
     this.emailTransporter = nodemailer.createTransporter({
