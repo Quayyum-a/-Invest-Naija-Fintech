@@ -41,7 +41,8 @@ export class NotificationService {
   }
 
   private setupSocketHandlers() {
-    this.io.on("connection", (socket) => {
+        // TODO: Enable when socket.io is installed
+    // this.io.on("connection", (socket) => {
       console.log("Client connected:", socket.id);
 
       // Join user to their personal room
