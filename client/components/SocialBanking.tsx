@@ -126,11 +126,30 @@ export default function SocialBanking() {
   const fetchSocialData = async () => {
     try {
       setLoading(true);
-      // For now, load mock data since social endpoints don't exist yet
-      loadMockData();
-      return;
+      const token = localStorage.getItem("investnaija_token");
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
 
-      // Data loaded by mock function
+      const [groupsRes, requestsRes, paymentsRes, challengesRes] =
+        await Promise.all([
+          fetch("/api/social/groups", { headers }).then((r) => r.json()),
+          fetch("/api/social/requests", { headers }).then((r) => r.json()),
+          fetch("/api/social/payments", { headers }).then((r) => r.json()),
+          fetch("/api/social/challenges", { headers }).then((r) => r.json()),
+        ]);
+
+      if (groupsRes.success) setGroupSavings(groupsRes.groups || []);
+      if (requestsRes.success) setMoneyRequests(requestsRes.requests || []);
+      if (paymentsRes.success) setSocialPayments(paymentsRes.payments || []);
+      if (challengesRes.success)
+        setFinancialChallenges(challengesRes.challenges || []);
+
+      // Fallback to mock data if no data returned
+      if (!groupsRes.groups?.length) {
+        loadMockData();
+      }
     } catch (error) {
       console.error("Failed to fetch social data:", error);
       // Load mock data
