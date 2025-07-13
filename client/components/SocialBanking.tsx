@@ -424,7 +424,7 @@ export default function SocialBanking() {
           <Dialog open={showRequestMoney} onOpenChange={setShowRequestMoney}>
             <DialogTrigger asChild>
               <Button variant="outline">
-                <Request className="w-4 h-4 mr-2" />
+                <ArrowDownLeft className="w-4 h-4 mr-2" />
                 Request Money
               </Button>
             </DialogTrigger>
