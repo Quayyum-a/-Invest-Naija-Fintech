@@ -120,9 +120,9 @@ export default function AIFinancialAdvisor() {
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: "ai",
-        content: response.data.response,
+        content: response.data.reply,
         timestamp: new Date(),
-        metadata: response.data.metadata,
+        metadata: undefined,
       };
 
       setChatMessages((prev) => [...prev, aiMessage]);
