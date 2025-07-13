@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from "express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { ErrorResponse } from "@shared/api";
 
 // Rate limiting storage (use Redis in production)
@@ -80,30 +82,51 @@ export const createRateLimit = (config: RateLimitConfig) => {
   };
 };
 
-// Predefined rate limiters
-export const authRateLimit = createRateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  maxRequests: 50, // 50 login attempts per minute (very lenient for development)
-  blockDuration: 1 * 60 * 1000, // Block for 1 minute after exceeding
-  message: "Too many authentication attempts, please try again later",
+// Enhanced rate limiters using express-rate-limit
+const createExpressRateLimit = (options: any) => {
+  return rateLimit({
+    ...options,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      success: false,
+      error: options.message || "Too many requests, please try again later",
+    },
+  });
+};
+
+// Production-ready rate limiters
+export const authRateLimit = createExpressRateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === "production" ? 5 : 50, // 5 attempts in production, 50 in dev
+  message: "Too many authentication attempts, please try again in 15 minutes",
+  skipSuccessfulRequests: true,
 });
 
-export const otpRateLimit = createRateLimit({
+export const otpRateLimit = createExpressRateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  maxRequests: 3, // 3 OTP requests per hour
+  max: 3, // 3 OTP requests per hour
   message: "Too many OTP requests, please try again in 1 hour",
 });
 
-export const transactionRateLimit = createRateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  maxRequests: 100, // 100 transactions per minute (very lenient for development)
+export const transactionRateLimit = createExpressRateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: process.env.NODE_ENV === "production" ? 10 : 100, // 10 transactions/min in production
   message: "Too many transactions, please slow down",
 });
 
-export const generalRateLimit = createRateLimit({
+export const generalRateLimit = createExpressRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 100, // 100 requests per 15 minutes
+  max: process.env.NODE_ENV === "production" ? 100 : 1000, // 100 requests/15min in production
   message: "Too many requests, please try again later",
+});
+
+// Strict rate limiter for sensitive operations
+export const strictRateLimit = createExpressRateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 attempts per hour
+  message:
+    "Too many attempts for this sensitive operation, please try again in 1 hour",
 });
 
 // Input validation and sanitization
@@ -149,42 +172,28 @@ export const validateInput = (
   next();
 };
 
-// Security headers middleware
-export const securityHeaders = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  // Prevent XSS attacks
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("X-XSS-Protection", "1; mode=block");
-
-  // Prevent clickjacking
-  res.setHeader(
-    "Content-Security-Policy",
-    "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data: https:; " +
-      "font-src 'self' https:; " +
-      "connect-src 'self' https:; " +
-      "frame-ancestors 'none';",
-  );
-
-  // Force HTTPS in production
-  if (process.env.NODE_ENV === "production") {
-    res.setHeader(
-      "Strict-Transport-Security",
-      "max-age=31536000; includeSubDomains",
-    );
-  }
-
-  // Prevent MIME type confusion
-  res.setHeader("X-Content-Type-Options", "nosniff");
-
-  next();
-};
+// Enhanced security headers middleware using helmet
+export const securityHeaders = helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "https:"],
+      connectSrc: ["'self'", "https:"],
+      frameAncestors: ["'none'"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
+  noSniff: true,
+  frameguard: { action: "deny" },
+  xssFilter: true,
+});
 
 // Request logging middleware
 export const requestLogger = (
