@@ -612,7 +612,7 @@ export default function SocialBanking() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Request className="w-5 h-5" />
+              <ArrowDownLeft className="w-5 h-5" />
               <span>Money Requests</span>
             </CardTitle>
           </CardHeader>
