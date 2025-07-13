@@ -28,7 +28,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { apiService } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
 interface FinancialAdvice {
