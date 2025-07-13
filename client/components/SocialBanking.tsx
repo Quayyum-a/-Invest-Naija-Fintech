@@ -578,7 +578,7 @@ export default function SocialBanking() {
                           key={member.id}
                           className="w-8 h-8 border-2 border-white"
                         >
-                          <AvatarImage src={member.avatar} />
+                          {member.avatar && <AvatarImage src={member.avatar} />}
                           <AvatarFallback>
                             {member.name.charAt(0)}
                           </AvatarFallback>
