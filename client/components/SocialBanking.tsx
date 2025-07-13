@@ -126,18 +126,11 @@ export default function SocialBanking() {
   const fetchSocialData = async () => {
     try {
       setLoading(true);
-      const [groupsRes, requestsRes, paymentsRes, challengesRes] =
-        await Promise.all([
-          api.get("/social/groups"),
-          api.get("/social/requests"),
-          api.get("/social/payments"),
-          api.get("/social/challenges"),
-        ]);
+      // For now, load mock data since social endpoints don't exist yet
+      loadMockData();
+      return;
 
-      setGroupSavings(groupsRes.data.groups);
-      setMoneyRequests(requestsRes.data.requests);
-      setSocialPayments(paymentsRes.data.payments);
-      setFinancialChallenges(challengesRes.data.challenges);
+      // Data loaded by mock function
     } catch (error) {
       console.error("Failed to fetch social data:", error);
       // Load mock data
@@ -292,7 +285,20 @@ export default function SocialBanking() {
 
   const createGroupSavings = async (data: any) => {
     try {
-      const response = await api.post("/social/groups", data);
+      // TODO: Implement actual API call when endpoint exists
+      console.log("Would create group:", data);
+      const response = {
+        data: {
+          group: {
+            id: Date.now().toString(),
+            ...data,
+            members: [],
+            currentAmount: 0,
+            status: "active",
+            createdBy: "1",
+          },
+        },
+      };
       setGroupSavings((prev) => [...prev, response.data.group]);
       setShowCreateGroup(false);
       toast({
@@ -311,7 +317,19 @@ export default function SocialBanking() {
 
   const requestMoney = async (data: any) => {
     try {
-      const response = await api.post("/social/requests", data);
+      // TODO: Implement actual API call when endpoint exists
+      console.log("Would send request:", data);
+      const response = {
+        data: {
+          request: {
+            id: Date.now().toString(),
+            ...data,
+            from: "1",
+            status: "pending",
+            createdAt: new Date().toISOString(),
+          },
+        },
+      };
       setMoneyRequests((prev) => [...prev, response.data.request]);
       setShowRequestMoney(false);
       toast({
@@ -330,7 +348,18 @@ export default function SocialBanking() {
 
   const sendMoney = async (data: any) => {
     try {
-      const response = await api.post("/social/payments", data);
+      // TODO: Implement actual API call when endpoint exists
+      console.log("Would send payment:", data);
+      const response = {
+        data: {
+          payment: {
+            id: Date.now().toString(),
+            ...data,
+            from: "1",
+            createdAt: new Date().toISOString(),
+          },
+        },
+      };
       setSocialPayments((prev) => [...prev, response.data.payment]);
       setShowSendMoney(false);
       toast({
