@@ -625,7 +625,6 @@ export default function SocialBanking() {
                 >
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-10 h-10">
-                      <AvatarImage src="" />
                       <AvatarFallback>U</AvatarFallback>
                     </Avatar>
                     <div>
