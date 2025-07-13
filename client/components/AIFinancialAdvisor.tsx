@@ -81,7 +81,7 @@ export default function AIFinancialAdvisor() {
   const generateFinancialAdvice = async () => {
     try {
       setIsGeneratingAdvice(true);
-      // TODO: Implement AI financial advice endpoint
+            // TODO: Implement AI financial advice endpoint
       console.log("Would fetch AI financial advice");
       const response = { data: { advice: mockAdvice } };
       setAdvice(response.data.advice);
@@ -109,8 +109,9 @@ export default function AIFinancialAdvisor() {
     setIsLoading(true);
 
     try {
-      const response = await api.post("/ai/chat", {
-        message: userInput,
+            // TODO: Implement AI chat endpoint
+      console.log("Would send chat message:", userInput);
+      const response = { data: { reply: `I understand you're asking about "${userInput}". As your AI financial advisor, I recommend consulting with a certified financial advisor for personalized advice.` } };
         userId: user?.id,
       });
 
