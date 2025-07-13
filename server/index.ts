@@ -268,52 +268,56 @@ export function createServer() {
   );
 
   // KYC routes (protected)
-  app.post("/kyc/submit", authenticateToken, submitKYCDocuments);
-  app.get("/kyc/status", authenticateToken, getKYCStatus);
-  app.post("/kyc/upload", authenticateToken, uploadKYCDocument);
+  app.post("/api/kyc/submit", authenticateToken, submitKYCDocuments);
+  app.get("/api/kyc/status", authenticateToken, getKYCStatus);
+  app.post("/api/kyc/upload", authenticateToken, uploadKYCDocument);
 
   // Payment routes
-  app.get("/payments/banks", getBanks);
+  app.get("/api/payments/banks", getBanks);
   app.post(
-    "/payments/paystack/initiate",
+    "/api/payments/paystack/initiate",
     authenticateToken,
     initiatePaystackPayment,
   );
   app.get(
-    "/payments/paystack/verify/:reference",
+    "/api/payments/paystack/verify/:reference",
     authenticateToken,
     handlePaystackCallback,
   );
-  app.post("/payments/paystack/callback", handlePaystackCallback);
-  app.post("/payments/verify-account", authenticateToken, linkBankAccount);
-  app.post("/payments/verify-bvn", authenticateToken, verifyBVN);
-  app.post("/payments/verify-nin", authenticateToken, verifyNIN);
-  app.post("/payments/link-bank", authenticateToken, linkBankAccount);
-  app.post("/payments/bank-transfer", authenticateToken, initiateBankTransfer);
+  app.post("/api/payments/paystack/callback", handlePaystackCallback);
+  app.post("/api/payments/verify-account", authenticateToken, linkBankAccount);
+  app.post("/api/payments/verify-bvn", authenticateToken, verifyBVN);
+  app.post("/api/payments/verify-nin", authenticateToken, verifyNIN);
+  app.post("/api/payments/link-bank", authenticateToken, linkBankAccount);
   app.post(
-    "/payments/virtual-account",
+    "/api/payments/bank-transfer",
+    authenticateToken,
+    initiateBankTransfer,
+  );
+  app.post(
+    "/api/payments/virtual-account",
     authenticateToken,
     generateVirtualAccount,
   );
 
   // Analytics routes (protected)
-  app.get("/analytics/user", authenticateToken, getUserAnalytics);
-  app.get("/analytics/app", authenticateToken, getAppAnalytics);
+  app.get("/api/analytics/user", authenticateToken, getUserAnalytics);
+  app.get("/api/analytics/app", authenticateToken, getAppAnalytics);
 
   // Notification routes (protected)
-  app.get("/notifications", authenticateToken, getUserNotifications);
+  app.get("/api/notifications", authenticateToken, getUserNotifications);
   app.put(
-    "/notifications/:notificationId/read",
+    "/api/notifications/:notificationId/read",
     authenticateToken,
     markNotificationRead,
   );
   app.put(
-    "/notifications/mark-all-read",
+    "/api/notifications/mark-all-read",
     authenticateToken,
     markAllNotificationsRead,
   );
   app.delete(
-    "/notifications/:notificationId",
+    "/api/notifications/:notificationId",
     authenticateToken,
     deleteNotification,
   );
