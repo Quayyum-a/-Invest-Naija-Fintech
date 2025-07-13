@@ -81,7 +81,9 @@ export default function AIFinancialAdvisor() {
   const generateFinancialAdvice = async () => {
     try {
       setIsGeneratingAdvice(true);
-      const response = await api.get("/ai/financial-advice");
+      // TODO: Implement AI financial advice endpoint
+      console.log("Would fetch AI financial advice");
+      const response = { data: { advice: mockAdvice } };
       setAdvice(response.data.advice);
     } catch (error) {
       console.error("Failed to generate advice:", error);
