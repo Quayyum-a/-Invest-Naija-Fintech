@@ -168,6 +168,39 @@ export const buyAirtime: RequestHandler = async (req, res) => {
       });
     }
 
+    // Enhanced validation
+    const validNetworks = ["MTN", "AIRTEL", "GLO", "9MOBILE"];
+    if (!validNetworks.includes(network.toUpperCase())) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid network. Supported networks: MTN, Airtel, Glo, 9mobile",
+      });
+    }
+
+    // Validate phone number (Nigerian format)
+    const phoneRegex = /^(\+234|234|0)?[789][01]\d{8}$/;
+    if (!phoneRegex.test(phoneNumber.replace(/\s+/g, ""))) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid Nigerian phone number format",
+      });
+    }
+
+    // Validate amount range
+    if (amount < 50) {
+      return res.status(400).json({
+        success: false,
+        error: "Minimum airtime amount is ₦50",
+      });
+    }
+
+    if (amount > 50000) {
+      return res.status(400).json({
+        success: false,
+        error: "Maximum airtime amount is ₦50,000",
+      });
+    }
+
     // Check wallet balance
     const wallet = getUserWallet(userId);
     if (!wallet || wallet.balance < amount) {
