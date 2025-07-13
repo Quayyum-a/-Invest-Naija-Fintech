@@ -167,53 +167,53 @@ export function createServer() {
 
   // Authentication routes (public)
   app.post(
-    "/auth/register",
+    "/api/auth/register",
     authRateLimit,
     validateEmail,
     validatePassword,
     validateNigerianPhone,
     register,
   );
-  app.post("/auth/login", authRateLimit, login);
-  app.post("/auth/logout", logout);
-  app.get("/auth/me", getCurrentUser);
+  app.post("/api/auth/login", authRateLimit, login);
+  app.post("/api/auth/logout", logout);
+  app.get("/api/auth/me", getCurrentUser);
 
   // OTP routes (public with rate limiting)
-  app.post("/otp/send", otpRateLimit, validateNigerianPhone, sendOTP);
-  app.post("/otp/verify", verifyOTP);
-  app.get("/otp/status", checkOTPStatus);
+  app.post("/api/otp/send", otpRateLimit, validateNigerianPhone, sendOTP);
+  app.post("/api/otp/verify", verifyOTP);
+  app.get("/api/otp/status", checkOTPStatus);
 
   // Protected wallet routes
-  app.get("/wallet", authenticateToken, getWallet);
+  app.get("/api/wallet", authenticateToken, getWallet);
   app.post(
-    "/wallet/deposit",
+    "/api/wallet/deposit",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     processDeposit,
   );
   app.post(
-    "/wallet/add",
+    "/api/wallet/add",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     processDeposit,
   );
   app.post(
-    "/wallet/withdraw",
+    "/api/wallet/withdraw",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     withdrawMoney,
   );
   app.post(
-    "/wallet/invest",
+    "/api/wallet/invest",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     investMoney,
   );
-  app.get("/transactions", authenticateToken, getTransactions);
+  app.get("/api/transactions", authenticateToken, getTransactions);
 
   // Financial services routes
   app.get("/services", getServices);
