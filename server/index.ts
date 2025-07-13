@@ -363,32 +363,32 @@ export function createServer() {
   );
 
   // Bill payment routes
-  app.get("/bills/billers", getBillers);
-  app.get("/bills/electricity/companies", getElectricityCompanies);
-  app.post("/bills/validate-customer", validateCustomer);
+  app.get("/api/bills/billers", getBillers);
+  app.get("/api/bills/electricity/companies", getElectricityCompanies);
+  app.post("/api/bills/validate-customer", validateCustomer);
   app.post(
-    "/bills/pay-electricity",
+    "/api/bills/pay-electricity",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     payElectricityBill,
   );
   app.post(
-    "/bills/buy-airtime",
+    "/api/bills/buy-airtime",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     buyAirtime,
   );
   app.post(
-    "/bills/buy-data",
+    "/api/bills/buy-data",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     buyDataBundle,
   );
   app.post(
-    "/bills/pay-cable-tv",
+    "/api/bills/pay-cable-tv",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
@@ -396,10 +396,10 @@ export function createServer() {
   );
 
   // Transfer routes
-  app.get("/transfer/banks", getBanksForTransfer);
-  app.post("/transfer/verify-account", verifyTransferAccount);
+  app.get("/api/transfer/banks", getBanksForTransfer);
+  app.post("/api/transfer/verify-account", verifyTransferAccount);
   app.post(
-    "/transfer/initiate",
+    "/api/transfer/initiate",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
@@ -407,11 +407,15 @@ export function createServer() {
   );
 
   // Admin routes (protected)
-  app.get("/admin/stats", authenticateToken, getAdminStats);
-  app.get("/admin/users", authenticateToken, getAllUsersAdmin);
-  app.get("/admin/users/:userId", authenticateToken, getUserDetails);
-  app.put("/admin/users/:userId/kyc", authenticateToken, updateUserKYC);
-  app.put("/admin/users/:userId/status", authenticateToken, updateUserStatus);
+  app.get("/api/admin/stats", authenticateToken, getAdminStats);
+  app.get("/api/admin/users", authenticateToken, getAllUsersAdmin);
+  app.get("/api/admin/users/:userId", authenticateToken, getUserDetails);
+  app.put("/api/admin/users/:userId/kyc", authenticateToken, updateUserKYC);
+  app.put(
+    "/api/admin/users/:userId/status",
+    authenticateToken,
+    updateUserStatus,
+  );
 
   // Initialize app on first startup
   try {
