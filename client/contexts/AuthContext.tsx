@@ -164,6 +164,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     lastName: string;
   }): Promise<AuthResponse> => {
     try {
+      console.log("Attempting registration with:", {
+        email: userData.email,
+        endpoint: "/api/auth/register",
+      });
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
