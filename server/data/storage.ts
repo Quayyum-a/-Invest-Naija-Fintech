@@ -68,7 +68,7 @@ const initDB = () => {
       FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
     );
 
-    CREATE TABLE IF NOT EXISTS investments (
+        CREATE TABLE IF NOT EXISTS investments (
       id TEXT PRIMARY KEY,
       userId TEXT NOT NULL,
       type TEXT NOT NULL,
@@ -76,6 +76,153 @@ const initDB = () => {
       currentValue REAL NOT NULL,
       returns REAL NOT NULL DEFAULT 0,
       status TEXT NOT NULL DEFAULT 'active',
+      createdAt TEXT NOT NULL,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    -- Social Banking Tables
+    CREATE TABLE IF NOT EXISTS social_groups (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      targetAmount REAL NOT NULL,
+      currentAmount REAL NOT NULL DEFAULT 0,
+      createdBy TEXT NOT NULL,
+      endDate TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      category TEXT,
+      createdAt TEXT NOT NULL,
+      FOREIGN KEY (createdBy) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS group_members (
+      id TEXT PRIMARY KEY,
+      groupId TEXT NOT NULL,
+      userId TEXT NOT NULL,
+      contribution REAL NOT NULL DEFAULT 0,
+      joinedAt TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active',
+      FOREIGN KEY (groupId) REFERENCES social_groups(id) ON DELETE CASCADE,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(groupId, userId)
+    );
+
+    CREATE TABLE IF NOT EXISTS money_requests (
+      id TEXT PRIMARY KEY,
+      fromUserId TEXT NOT NULL,
+      toUserId TEXT NOT NULL,
+      amount REAL NOT NULL,
+      reason TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      dueDate TEXT,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      FOREIGN KEY (fromUserId) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (toUserId) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS social_payments (
+      id TEXT PRIMARY KEY,
+      fromUserId TEXT NOT NULL,
+      toUserId TEXT NOT NULL,
+      amount REAL NOT NULL,
+      message TEXT,
+      type TEXT NOT NULL DEFAULT 'payment',
+      isPublic BOOLEAN DEFAULT false,
+      createdAt TEXT NOT NULL,
+      FOREIGN KEY (fromUserId) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (toUserId) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS financial_challenges (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      targetAmount REAL NOT NULL,
+      duration INTEGER NOT NULL,
+      startDate TEXT NOT NULL,
+      endDate TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'upcoming',
+      category TEXT NOT NULL,
+      createdAt TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS challenge_participants (
+      id TEXT PRIMARY KEY,
+      challengeId TEXT NOT NULL,
+      userId TEXT NOT NULL,
+      progress REAL NOT NULL DEFAULT 0,
+      rank INTEGER DEFAULT 0,
+      joinedAt TEXT NOT NULL,
+      FOREIGN KEY (challengeId) REFERENCES financial_challenges(id) ON DELETE CASCADE,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(challengeId, userId)
+    );
+
+    -- Notification System
+    CREATE TABLE IF NOT EXISTS notifications (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      type TEXT NOT NULL,
+      priority TEXT DEFAULT 'normal',
+      read BOOLEAN DEFAULT false,
+      metadata TEXT,
+      createdAt TEXT NOT NULL,
+      readAt TEXT,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    -- Crypto Holdings
+    CREATE TABLE IF NOT EXISTS crypto_holdings (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      symbol TEXT NOT NULL,
+      name TEXT NOT NULL,
+      quantity REAL NOT NULL,
+      averageBuyPrice REAL NOT NULL,
+      currentPrice REAL NOT NULL,
+      totalInvested REAL NOT NULL,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    -- Business Profiles
+    CREATE TABLE IF NOT EXISTS business_profiles (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      businessName TEXT NOT NULL,
+      businessType TEXT NOT NULL,
+      rcNumber TEXT,
+      tin TEXT,
+      industry TEXT,
+      businessAddress TEXT,
+      verificationStatus TEXT DEFAULT 'pending',
+      registrationDate TEXT,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    -- Cards Management
+    CREATE TABLE IF NOT EXISTS cards (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      cardNumber TEXT NOT NULL,
+      cardType TEXT NOT NULL,
+      cardBrand TEXT DEFAULT 'verve',
+      expiryMonth INTEGER,
+      expiryYear INTEGER,
+      status TEXT DEFAULT 'active',
+      dailyLimit REAL DEFAULT 500000,
+      monthlyLimit REAL DEFAULT 2000000,
+      onlineEnabled BOOLEAN DEFAULT true,
+      contactlessEnabled BOOLEAN DEFAULT true,
+      internationalEnabled BOOLEAN DEFAULT false,
+      issuedDate TEXT NOT NULL,
+      lastUsed TEXT,
       createdAt TEXT NOT NULL,
       FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
     );
