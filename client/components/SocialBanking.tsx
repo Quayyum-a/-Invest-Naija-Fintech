@@ -489,7 +489,7 @@ export default function SocialBanking() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
-              <Request className="w-8 h-8 text-yellow-600" />
+              <ArrowDownLeft className="w-8 h-8 text-yellow-600" />
               <div>
                 <p className="text-sm text-gray-600">Pending Requests</p>
                 <p className="text-2xl font-bold">
