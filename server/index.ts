@@ -232,6 +232,13 @@ export function createServer() {
     investMoney,
   );
   app.get("/transactions", authenticateToken, getTransactions);
+  app.get("/transactions/history", authenticateToken, getTransactionHistory);
+
+  // Enhanced wallet routes
+  app.post("/wallet/fund", authenticateToken, initiateWalletFunding);
+  app.get("/wallet/verify/:reference", authenticateToken, verifyWalletFunding);
+  app.post("/wallet/transfer", authenticateToken, transferToUser);
+  app.post("/wallet/withdraw", authenticateToken, withdrawToBank);
 
   // Financial services routes
   app.get("/services", getServices);
