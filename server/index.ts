@@ -216,9 +216,9 @@ export function createServer() {
   app.get("/api/transactions", authenticateToken, getTransactions);
 
   // Financial services routes
-  app.get("/services", getServices);
+  app.get("/api/services", getServices);
   app.post(
-    "/services/airtime",
+    "/api/services/airtime",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
@@ -226,7 +226,7 @@ export function createServer() {
     buyAirtimeService,
   );
   app.post(
-    "/services/data",
+    "/api/services/data",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
@@ -234,31 +234,35 @@ export function createServer() {
     buyData,
   );
   app.post(
-    "/services/bills",
+    "/api/services/bills",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     payBill,
   );
   app.post(
-    "/services/transfer",
+    "/api/services/transfer",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     bankTransfer,
   );
-  app.post("/services/verify-account", authenticateToken, verifyAccount);
+  app.post("/api/services/verify-account", authenticateToken, verifyAccount);
 
   // Dashboard and portfolio data
-  app.get("/dashboard", authenticateToken, getDashboardData);
-  app.get("/portfolio", authenticateToken, getPortfolioData);
+  app.get("/api/dashboard", authenticateToken, getDashboardData);
+  app.get("/api/portfolio", authenticateToken, getPortfolioData);
 
   // Investment routes (protected)
-  app.get("/investments/products", getInvestmentProducts);
-  app.post("/investments/roundup", authenticateToken, createRoundUpInvestment);
-  app.post("/investments/withdraw", authenticateToken, withdrawInvestment);
+  app.get("/api/investments/products", getInvestmentProducts);
+  app.post(
+    "/api/investments/roundup",
+    authenticateToken,
+    createRoundUpInvestment,
+  );
+  app.post("/api/investments/withdraw", authenticateToken, withdrawInvestment);
   app.get(
-    "/investments/performance",
+    "/api/investments/performance",
     authenticateToken,
     getInvestmentPerformance,
   );
