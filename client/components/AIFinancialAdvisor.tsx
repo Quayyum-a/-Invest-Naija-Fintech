@@ -83,7 +83,7 @@ export default function AIFinancialAdvisor() {
       setIsGeneratingAdvice(true);
       // TODO: Implement AI financial advice endpoint
       console.log("Would fetch AI financial advice");
-      const response = { data: { advice: mockAdvice } };
+      const response = { data: { advice: getMockAdvice() } };
       setAdvice(response.data.advice);
     } catch (error) {
       console.error("Failed to generate advice:", error);
