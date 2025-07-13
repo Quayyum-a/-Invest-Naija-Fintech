@@ -303,7 +303,7 @@ export default function SocialBanking() {
   };
 
   const createGroupSavings = async (data: any) => {
-        try {
+    try {
       const token = localStorage.getItem("investnaija_token");
       const response = await fetch("/api/social/groups", {
         method: "POST",
@@ -318,11 +318,14 @@ export default function SocialBanking() {
 
       if (result.success) {
         setGroupSavings((prev) => [...prev, result.group]);
-      setShowCreateGroup(false);
-      toast({
-        title: "Success",
-        description: "Group savings created successfully!",
-      });
+        setShowCreateGroup(false);
+        toast({
+          title: "Success",
+          description: "Group savings created successfully!",
+        });
+      } else {
+        throw new Error(result.error || "Failed to create group");
+      }
     } catch (error) {
       console.error("Failed to create group:", error);
       toast({
