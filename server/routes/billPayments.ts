@@ -9,6 +9,7 @@ import {
   updateWallet,
   createTransaction,
 } from "../data/storage";
+import { paymentsService } from "../services/paymentsService";
 
 // Get available billers
 export const getBillers: RequestHandler = async (req, res) => {
