@@ -41,20 +41,18 @@ export class NotificationService {
   }
 
   private setupSocketHandlers() {
-        // TODO: Enable when socket.io is installed
+    // TODO: Enable when socket.io is installed
     // this.io.on("connection", (socket) => {
-      console.log("Client connected:", socket.id);
-
-      // Join user to their personal room
-      socket.on("join-user", (userId: string) => {
-        socket.join(`user-${userId}`);
-        console.log(`User ${userId} joined their notification room`);
-      });
-
-      socket.on("disconnect", () => {
-        console.log("Client disconnected:", socket.id);
-      });
-    });
+    //   console.log("Client connected:", socket.id);
+    //   // Join user to their personal room
+    //   socket.on("join-user", (userId: string) => {
+    //     socket.join(`user-${userId}`);
+    //     console.log(`User ${userId} joined their notification room`);
+    //   });
+    //   socket.on("disconnect", () => {
+    //     console.log("Client disconnected:", socket.id);
+    //   });
+    // });
   }
 
   async sendNotification(notification: NotificationData) {
