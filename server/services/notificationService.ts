@@ -1,16 +1,16 @@
-import { Server as SocketIOServer } from 'socket.io';
-import { Server as HTTPServer } from 'http';
-import nodemailer from 'nodemailer';
-import { sendSMS } from '../routes/otp';
+// import { Server as SocketIOServer } from 'socket.io'; // TODO: Install socket.io when needed
+import { Server as HTTPServer } from "http";
+import nodemailer from "nodemailer";
+import { sendSMS } from "../routes/otp";
 
 export interface NotificationData {
   userId: string;
-  type: 'transaction' | 'investment' | 'kyc' | 'security' | 'promo';
+  type: "transaction" | "investment" | "kyc" | "security" | "promo";
   title: string;
   message: string;
   data?: any;
-  priority?: 'low' | 'medium' | 'high';
-  channels?: ('push' | 'email' | 'sms' | 'in_app')[];
+  priority?: "low" | "medium" | "high";
+  channels?: ("push" | "email" | "sms" | "in_app")[];
 }
 
 export class NotificationService {
@@ -21,81 +21,83 @@ export class NotificationService {
     this.io = new SocketIOServer(server, {
       cors: {
         origin: process.env.FRONTEND_URL || "http://localhost:5173",
-        methods: ["GET", "POST"]
-      }
+        methods: ["GET", "POST"],
+      },
     });
 
     // Initialize email transporter
     this.emailTransporter = nodemailer.createTransporter({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: parseInt(process.env.SMTP_PORT || "587"),
       secure: false,
       auth: {
         user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
+        pass: process.env.SMTP_PASS,
+      },
     });
 
     this.setupSocketHandlers();
   }
 
   private setupSocketHandlers() {
-    this.io.on('connection', (socket) => {
-      console.log('Client connected:', socket.id);
+    this.io.on("connection", (socket) => {
+      console.log("Client connected:", socket.id);
 
       // Join user to their personal room
-      socket.on('join-user', (userId: string) => {
+      socket.on("join-user", (userId: string) => {
         socket.join(`user-${userId}`);
         console.log(`User ${userId} joined their notification room`);
       });
 
-      socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id);
+      socket.on("disconnect", () => {
+        console.log("Client disconnected:", socket.id);
       });
     });
   }
 
   async sendNotification(notification: NotificationData) {
     try {
-      const channels = notification.channels || ['in_app', 'push'];
-      
+      const channels = notification.channels || ["in_app", "push"];
+
       // Send in-app notification (WebSocket)
-      if (channels.includes('in_app')) {
+      if (channels.includes("in_app")) {
         await this.sendInAppNotification(notification);
       }
 
       // Send push notification
-      if (channels.includes('push')) {
+      if (channels.includes("push")) {
         await this.sendPushNotification(notification);
       }
 
       // Send email notification
-      if (channels.includes('email')) {
+      if (channels.includes("email")) {
         await this.sendEmailNotification(notification);
       }
 
       // Send SMS notification
-      if (channels.includes('sms')) {
+      if (channels.includes("sms")) {
         await this.sendSMSNotification(notification);
       }
 
-      console.log(`Notification sent to user ${notification.userId}: ${notification.title}`);
+      console.log(
+        `Notification sent to user ${notification.userId}: ${notification.title}`,
+      );
       return true;
     } catch (error) {
-      console.error('Failed to send notification:', error);
+      console.error("Failed to send notification:", error);
       return false;
     }
   }
 
   private async sendInAppNotification(notification: NotificationData) {
-    this.io.to(`user-${notification.userId}`).emit('notification', {
+    this.io.to(`user-${notification.userId}`).emit("notification", {
       id: Date.now().toString(),
       type: notification.type,
       title: notification.title,
       message: notification.message,
       data: notification.data,
       timestamp: new Date().toISOString(),
-      read: false
+      read: false,
     });
   }
 
@@ -103,7 +105,7 @@ export class NotificationService {
     // Get user's device tokens from database
     // For now, we'll implement a basic version
     const deviceTokens = await this.getUserDeviceTokens(notification.userId);
-    
+
     if (deviceTokens.length > 0) {
       // Send to Firebase Cloud Messaging or similar
       console.log(`Push notification sent to ${deviceTokens.length} devices`);
@@ -116,15 +118,15 @@ export class NotificationService {
       if (!user?.email) return;
 
       const emailTemplate = this.getEmailTemplate(notification);
-      
+
       await this.emailTransporter.sendMail({
         from: `"InvestNaija" <${process.env.SMTP_USER}>`,
         to: user.email,
         subject: notification.title,
-        html: emailTemplate
+        html: emailTemplate,
       });
     } catch (error) {
-      console.error('Email notification failed:', error);
+      console.error("Email notification failed:", error);
     }
   }
 
@@ -133,9 +135,12 @@ export class NotificationService {
       const user = await this.getUserById(notification.userId);
       if (!user?.phone) return;
 
-      await sendSMS(user.phone, `${notification.title}: ${notification.message}`);
+      await sendSMS(
+        user.phone,
+        `${notification.title}: ${notification.message}`,
+      );
     } catch (error) {
-      console.error('SMS notification failed:', error);
+      console.error("SMS notification failed:", error);
     }
   }
 
@@ -172,7 +177,7 @@ export class NotificationService {
         </body>
       </html>
     `;
-    
+
     return baseTemplate;
   }
 
@@ -191,53 +196,53 @@ export class NotificationService {
   async sendTransactionNotification(userId: string, transaction: any) {
     const notification: NotificationData = {
       userId,
-      type: 'transaction',
-      title: 'Transaction Completed',
+      type: "transaction",
+      title: "Transaction Completed",
       message: `Your ${transaction.type} of ₦${transaction.amount.toLocaleString()} has been processed successfully.`,
       data: { transactionId: transaction.id },
-      channels: ['in_app', 'push', 'email']
+      channels: ["in_app", "push", "email"],
     };
-    
+
     return this.sendNotification(notification);
   }
 
   async sendInvestmentNotification(userId: string, investment: any) {
     const notification: NotificationData = {
       userId,
-      type: 'investment',
-      title: 'Investment Update',
+      type: "investment",
+      title: "Investment Update",
       message: `Your investment in ${investment.type} has earned ₦${investment.returns.toLocaleString()} in returns.`,
       data: { investmentId: investment.id },
-      channels: ['in_app', 'push', 'email']
+      channels: ["in_app", "push", "email"],
     };
-    
+
     return this.sendNotification(notification);
   }
 
   async sendKYCNotification(userId: string, status: string) {
     const notification: NotificationData = {
       userId,
-      type: 'kyc',
-      title: 'KYC Status Update',
-      message: `Your KYC verification has been ${status}. ${status === 'verified' ? 'You can now access all features.' : 'Please check and resubmit your documents.'}`,
+      type: "kyc",
+      title: "KYC Status Update",
+      message: `Your KYC verification has been ${status}. ${status === "verified" ? "You can now access all features." : "Please check and resubmit your documents."}`,
       data: { kycStatus: status },
-      channels: ['in_app', 'email']
+      channels: ["in_app", "email"],
     };
-    
+
     return this.sendNotification(notification);
   }
 
   async sendSecurityNotification(userId: string, event: string) {
     const notification: NotificationData = {
       userId,
-      type: 'security',
-      title: 'Security Alert',
+      type: "security",
+      title: "Security Alert",
       message: `We detected ${event} on your account. If this wasn't you, please contact support immediately.`,
       data: { securityEvent: event },
-      channels: ['in_app', 'push', 'email', 'sms'],
-      priority: 'high'
+      channels: ["in_app", "push", "email", "sms"],
+      priority: "high",
     };
-    
+
     return this.sendNotification(notification);
   }
 }
