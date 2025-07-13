@@ -1,499 +1,362 @@
-# 🇳🇬 InvestNaija - Production-Ready Nigerian Fintech Platform
+# InvestNaija - Complete Nigerian Fintech Platform
 
-A comprehensive fintech application built for Nigerian financial services, featuring **real payment gateway integration**, **live KYC verification**, and **actual cryptocurrency trading**. This is a production-ready platform with zero dummy data - all transactions are real.
+A comprehensive fintech platform built for the Nigerian market, offering banking, investments, social features, crypto trading, and business banking solutions.
 
-![InvestNaija Dashboard](https://via.placeholder.com/800x400/10b981/ffffff?text=InvestNaija+Production+Ready)
+![InvestNaija Banner](https://via.placeholder.com/800x200/2E7D32/FFFFFF?text=InvestNaija+-+Nigerian+Fintech+Platform)
 
-## 🚀 Production Features (Zero Dummy Data)
+## 🌟 Overview
 
-### 💳 Real Payment Gateway Integration
+InvestNaija is a full-stack financial technology platform designed specifically for Nigerian users, featuring modern web technologies, real-time capabilities, and comprehensive banking services.
 
-- **Paystack Integration**: Live card payments and bank transfers
-- **Flutterwave Support**: Alternative payment gateway
-- **Virtual Account Generation**: Real Nigerian bank account numbers
-- **Bank Account Verification**: Live account validation via APIs
-- **❌ NO Manual Funding**: Removed all dummy payment methods
+## ✨ Key Features
 
-### 🏦 Nigerian Banking Integration
+### 🏦 **Core Banking**
 
-- **All Major Banks**: Access, GTB, First Bank, UBA, Zenith, FCMB, etc.
-- **Live Verification**: Real-time account number and BVN validation
-- **Secure Transfers**: Direct bank-to-bank via payment gateways
-- **Multiple Methods**: Cards, bank transfers, USSD, mobile banking
+- **Digital Wallet** - Secure wallet management with real-time balance updates
+- **Money Transfer** - Bank-to-bank transfers and P2P payments
+- **Transaction History** - Detailed transaction tracking and analytics
+- **Multi-currency Support** - NGN primary with crypto support
 
-### 🔐 Advanced KYC Verification
+### 💰 **Investment Platform**
 
-- **BVN Verification**: Real Bank Verification Number validation
-- **NIN Integration**: National Identification Number verification
-- **Bank Account Linking**: Live account verification
-- **Phone OTP**: SMS-based verification
-- **Regulatory Compliance**: Full CBN compliance ready
+- **Investment Products** - Treasury bills, mutual funds, fixed deposits
+- **Portfolio Management** - Real-time portfolio tracking and performance analytics
+- **Automated Investments** - Round-up savings and scheduled investments
+- **Investment Analytics** - Detailed performance reports and projections
 
-### 💰 Live Cryptocurrency Trading
+### 👥 **Social Banking**
 
-- **Real Market Data**: CoinGecko API integration
-- **No Fake Holdings**: Users start with empty portfolios
-- **Actual Trading**: Real buy/sell with wallet deductions
-- **Live P&L**: Market-based profit/loss calculations
+- **Group Savings** - Collaborative savings goals with friends and family
+- **Money Requests** - Send and receive money requests with reasons
+- **Social Payments** - Gift money with messages and public/private options
+- **Financial Challenges** - Community-driven financial goals and competitions
 
-### 🔒 Production Security
+### ₿ **Cryptocurrency Trading**
 
-- **bcrypt Hashing**: Enterprise-grade password security
-- **SQLite Database**: Persistent data storage
-- **Session Management**: Proper JWT authentication
-- **Rate Limiting**: Brute force protection
+- **Live Market Data** - Real-time crypto prices and market information
+- **Portfolio Tracking** - Track crypto holdings and performance
+- **Buy/Sell Interface** - Easy crypto trading with NGN conversion
+- **Market Analytics** - Technical analysis and trading insights
 
-## 🎯 Live Credentials (Working)
+### 🏢 **Business Banking**
 
-### Admin Access
+- **Business Accounts** - Corporate account management
+- **Bulk Payments** - Process multiple payments efficiently
+- **Business Analytics** - Financial insights and reporting
+- **Compliance Tools** - KYC and regulatory compliance features
 
-- **Email**: `admin@investnaija.com`
-- **Password**: `Admin123!`
-- **Features**: Full admin dashboard, user management
+### 📱 **Bill Payments & Services**
 
-### Demo Account
+- **Airtime & Data** - Mobile top-up for all Nigerian networks
+- **Electricity Bills** - Pay utility bills for major distributors
+- **Cable TV** - DStv, GOtv, and other subscription payments
+- **Educational** - School fees and examination payments
 
-- **Email**: `demo@investnaija.com`
-- **Password**: `Demo123!`
-- **Features**: Standard user testing account
+### 🔐 **Security & Compliance**
 
-## ⚡ Quick Start
+- **KYC Verification** - BVN and NIN integration
+- **Two-Factor Authentication** - Enhanced account security
+- **Fraud Detection** - Real-time transaction monitoring
+- **Audit Trails** - Complete transaction logging for compliance
+
+### 🔔 **Real-time Features**
+
+- **Live Notifications** - WebSocket-powered instant notifications
+- **Real-time Updates** - Live balance and transaction updates
+- **Market Alerts** - Crypto and investment alerts
+- **Social Updates** - Group activity notifications
+
+### 🤖 **AI Integration**
+
+- **Financial Advisor** - AI-powered financial advice and insights
+- **Smart Categorization** - Automatic transaction categorization
+- **Spending Analytics** - AI-driven spending pattern analysis
+- **Investment Recommendations** - Personalized investment suggestions
+
+## 🛠️ Technology Stack
+
+### **Frontend**
+
+- **Framework**: React 18 with TypeScript
+- **Routing**: React Router 6 (SPA mode)
+- **Styling**: TailwindCSS 3 with custom design system
+- **UI Components**: Radix UI primitives
+- **State Management**: React Query for server state
+- **Icons**: Lucide React
+- **Charts**: Victory.js and Recharts
+- **Build Tool**: Vite 6
+
+### **Backend**
+
+- **Runtime**: Node.js with Express.js
+- **Language**: TypeScript
+- **Database**: SQLite (development) / PostgreSQL (production ready)
+- **Authentication**: JWT with secure session management
+- **Real-time**: Socket.io for WebSocket connections
+- **Validation**: Zod for runtime type checking
+- **Security**: Comprehensive middleware stack
+
+### **Development & Deployment**
+
+- **Package Manager**: npm
+- **Testing**: Vitest
+- **Linting**: ESLint
+- **Formatting**: Prettier
+- **Deployment**: Docker ready with production builds
+- **CI/CD**: GitHub Actions compatible
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 16+
+- npm 7+
+
+### Installation
 
 ```bash
-# Clone repository
-git clone <your-repo-url>
+# Clone the repository
+git clone https://github.com/your-org/investnaija.git
 cd investnaija
 
 # Install dependencies
 npm install
 
-# Initialize database with proper admin/demo users
-npm run init
-
-# Start production-ready server
+# Start development server
 npm run dev
-
-# Access application
-# http://localhost:8080
 ```
 
-## 🏗️ Architecture
+### First-time Setup
 
-### Backend Stack
+1. **Access the application** at `http://localhost:8080`
+2. **Admin Access**: Login with `quayyumariyo@gmail.com` / `SuperAdmin123!`
+3. **Create user account** via the registration page
+4. **Explore features** through the comprehensive dashboard
 
-- **Node.js + Express**: API server
-- **TypeScript**: Type safety
-- **SQLite**: Persistent database
-- **bcrypt**: Password hashing
-- **Real API Integration**: Paystack, CoinGecko
-
-### Frontend Stack
-
-- **React 18 + TypeScript**: Modern UI
-- **Vite**: Fast bundling
-- **Tailwind CSS**: Production styling
-- **Radix UI**: Accessible components
-
-## 💡 Production Improvements Made
-
-### ❌ Removed All Dummy Features
-
-- Manual "Add Money" buttons
-- Fake crypto holdings
-- Mock transaction data
-- Dummy payment flows
-- Base64 password hashing
-
-### ✅ Added Real Integration
-
-- Live Paystack payment processing
-- Actual Nigerian bank verification
-- Real CoinGecko cryptocurrency data
-- Genuine KYC verification flow
-- Persistent SQLite database
-
-### 🔧 Fixed Critical Issues
-
-- Authentication system (bcrypt + proper DB)
-- Admin/demo login credentials
-- Terminal errors (401s, 400s)
-- Persistent sessions
-- Real API error handling
-
-## 🎯 User Journey (Production)
-
-### 1. Account Creation
+## 📊 Project Structure
 
 ```
-Register → Email verification → Secure password (bcrypt) → Wallet created (₦0)
+investnaija/
+├── client/                    # React frontend application
+│   ├── components/            # Reusable UI components
+│   │   ├── ui/               # Base UI component library (45+ components)
+│   │   ├── AIFinancialAdvisor.tsx
+│   │   ├── SocialBanking.tsx
+│   │   ├── CryptoTicker.tsx
+│   │   └── ...
+│   ├── pages/                # Route-based page components
+│   │   ├── Dashboard.tsx     # Main user dashboard
+│   │   ├── Portfolio.tsx     # Investment portfolio
+│   │   ├── Crypto.tsx        # Cryptocurrency trading
+│   │   ├── SocialPage.tsx    # Social banking features
+│   │   ├── BusinessBanking.tsx
+│   │   └── ...
+│   ├── contexts/             # React context providers
+│   ├── hooks/                # Custom React hooks
+│   └── lib/                  # Utilities and API client
+├── server/                   # Express.js backend
+│   ├── routes/               # API route handlers
+│   │   ├── auth.ts          # Authentication endpoints
+│   │   ├── social.ts        # Social banking API
+│   │   ├── crypto.ts        # Cryptocurrency endpoints
+│   │   ├── payments.ts      # Payment processing
+│   │   └── ...
+│   ├── services/            # Business logic services
+│   │   ├── notificationService.ts
+│   │   ├── loanServices.ts
+│   │   ├── cardManagement.ts
+│   │   └── ...
+│   ├── data/                # Database layer
+│   │   ├── storage.ts       # Database functions
+│   │   └── init.ts         # App initialization
+│   ├── middleware/          # Express middleware
+│   └── config/             # Configuration management
+├── shared/                  # Shared TypeScript types
+├── mobile/                  # React Native mobile app
+└── docs/                   # Documentation
 ```
 
-### 2. Wallet Funding (Real Money Only)
+## 🏗️ Architecture Features
 
+### **Database Schema**
+
+- **Users & Authentication** - Secure user management with role-based access
+- **Financial Accounts** - Wallets, bank accounts, and card management
+- **Transactions** - Comprehensive transaction tracking with metadata
+- **Social Features** - Groups, requests, payments, and challenges
+- **Investments** - Portfolio tracking and performance analytics
+- **Notifications** - Multi-channel notification system
+- **Business Profiles** - Corporate account management
+- **Crypto Holdings** - Cryptocurrency portfolio tracking
+
+### **API Architecture**
+
+- **RESTful Design** - Consistent API patterns
+- **Authentication** - JWT-based with refresh tokens
+- **Rate Limiting** - Protection against abuse
+- **Error Handling** - Comprehensive error responses
+- **Validation** - Request/response validation with Zod
+- **Real-time Updates** - WebSocket integration
+
+### **Security Features**
+
+- **Authentication** - Secure login with session management
+- **Authorization** - Role-based access control
+- **Data Protection** - Input sanitization and validation
+- **Rate Limiting** - API abuse prevention
+- **CORS** - Cross-origin request protection
+- **Headers** - Security headers implementation
+
+## 📱 Mobile Application
+
+The platform includes a React Native mobile application with:
+
+- **Native Navigation** - Stack and tab navigation
+- **Biometric Authentication** - Fingerprint and Face ID
+- **Push Notifications** - Real-time mobile notifications
+- **Offline Support** - Basic offline functionality
+- **Native Integrations** - Camera, contacts, and device features
+
+## 🔧 Development
+
+### **Available Scripts**
+
+```bash
+# Development
+npm run dev              # Start development server
+npm run typecheck        # TypeScript validation
+npm test                # Run test suite
+
+# Building
+npm run build           # Production build
+npm run build:client    # Build frontend only
+npm run build:server    # Build backend only
+
+# Production
+npm start              # Start production server
 ```
-Paystack Card Payment → Bank Transfer → Virtual Account → Real-time processing
-```
 
-### 3. KYC Verification (Required for >₦50,000)
+### **Configuration**
 
-```
-BVN Entry → NIN Verification → Bank Account Linking → Phone OTP → Verified Status
-```
-
-### 4. Investment & Trading
-
-```
-Real Balance Required → Live Market Data → Actual Transactions → Portfolio Tracking
-```
-
-## 🔐 Environment Setup
-
-### Payment Gateway Configuration
+The application supports extensive configuration through environment variables:
 
 ```env
-# Paystack (Required)
-PAYSTACK_SECRET_KEY=sk_live_your_live_key
-PAYSTACK_PUBLIC_KEY=pk_live_your_public_key
-
-# Flutterwave (Optional)
-FLUTTERWAVE_SECRET_KEY=FLWSECK_LIVE-your_key
-
 # Database
-DATABASE_URL=sqlite:./data/investnaija.db
+DATABASE_URL=postgresql://...
 
-# Security
-JWT_SECRET=your_production_jwt_secret
+# Authentication
+JWT_SECRET=your-secret-key
+
+# External Services
+PAYSTACK_SECRET_KEY=pk_test_...
+SENDGRID_API_KEY=SG...
+TERMII_API_KEY=TL...
+
+# Feature Flags
+ENABLE_CRYPTO=true
+ENABLE_SOCIAL_BANKING=true
+ENABLE_BUSINESS_FEATURES=true
 ```
 
-### Nigerian Bank APIs
+## 🌍 Nigerian Market Focus
 
-Pre-integrated with:
+### **Localization**
 
-- **Paystack Banks API**: Live bank list and verification
-- **Account Validation**: Real-time account number checks
-- **BVN Services**: Actual BVN verification
-- **Payment Processing**: Live transaction handling
+- **Currency**: Primary NGN with crypto support
+- **Banking Integration**: Nigerian bank support
+- **Payment Providers**: Paystack and Flutterwave ready
+- **Regulatory Compliance**: CBN guidelines adherence
+- **Local Services**: Nigerian telco and utility providers
 
-## 📊 Real Features Overview
+### **Supported Services**
 
-### Wallet Management
+- **Banks**: All major Nigerian banks
+- **Mobile Networks**: MTN, Airtel, Glo, 9mobile
+- **Utilities**: PHCN, AEDC, EKEDC, and more
+- **Cable TV**: DStv, GOtv, StarTimes
+- **Education**: WAEC, NECO, JAMB payments
 
-- ✅ Real payment gateway funding only
-- ✅ Live bank transfer processing
-- ✅ Actual transaction history
-- ✅ Genuine balance tracking
-- ❌ No manual/dummy funding
+## 🚀 Deployment
 
-### Investment Portfolio
-
-- ✅ Real investment calculations
-- ✅ Live market-based returns
-- ✅ Actual profit/loss tracking
-- ✅ Genuine portfolio analytics
-- ❌ No fake performance data
-
-### Cryptocurrency Trading
-
-- ✅ Live CoinGecko market data
-- ✅ Real buy/sell transactions
-- ✅ Actual wallet deductions
-- ✅ Live portfolio tracking
-- ❌ No dummy crypto holdings
-
-### KYC & Compliance
-
-- ✅ Real BVN verification API
-- ✅ Actual NIN validation
-- ✅ Live bank account verification
-- ✅ Phone number OTP
-- ❌ No dummy verification
-
-## 🚀 Production Deployment
-
-### Readiness Checklist
-
-- ✅ Real payment processing
-- ✅ Secure authentication
-- ✅ Persistent database
-- ✅ KYC verification
-- ✅ Live market data
-- ✅ Nigerian bank compliance
-- ✅ Zero dummy data
-- ✅ Production security
-
-### Database Migration
+### **Docker Deployment**
 
 ```bash
-# For production, migrate to PostgreSQL
-npm install pg @types/pg
+# Build Docker image
+docker build -t investnaija .
 
-# Update environment
-DATABASE_URL=postgresql://user:pass@host:5432/investnaija
+# Run container
+docker run -p 8080:8080 investnaija
 ```
 
-### Security Hardening
+### **Environment Setup**
 
 ```bash
-# Enable production mode
-NODE_ENV=production
+# Install dependencies
+npm install
 
-# Configure HTTPS
-SSL_CERT_PATH=/path/to/cert.pem
-SSL_KEY_PATH=/path/to/key.pem
+# Build application
+npm run build
 
-# Set secure JWT secret
-JWT_SECRET=your_crypto_secure_random_string
+# Start production server
+npm start
 ```
 
-## 🏦 Nigerian Banking Integration
+## 🔐 Security
 
-### Supported Banks (Live Integration)
+- **Authentication**: JWT with secure session management
+- **Authorization**: Role-based access control (user, admin, super_admin)
+- **Data Protection**: Input validation and sanitization
+- **API Security**: Rate limiting and CORS protection
+- **Compliance**: Nigerian financial regulation compliance
 
-- Access Bank, GTBank, First Bank
-- UBA, Zenith Bank, FCMB
-- Fidelity Bank, Sterling Bank
-- Stanbic IBTC, Wema Bank
-- Polaris Bank, Union Bank
-- And all CBN-licensed banks
+## 📈 Performance
 
-### Payment Methods
-
-- **Paystack Cards**: Visa, Mastercard, Verve
-- **Bank Transfer**: All Nigerian banks
-- **USSD**: Quick mobile payments
-- **Bank Branches**: Over-the-counter funding
-
-## 📞 API Integration Status
-
-### Payment Gateways
-
-- 🟢 **Paystack**: Full integration (test & live)
-- 🟢 **Flutterwave**: Backup integration ready
-- 🟢 **Bank APIs**: Real-time verification
-
-### Market Data
-
-- 🟢 **CoinGecko**: Live crypto prices
-- 🟢 **Real-time**: WebSocket price updates
-- 🟢 **Historical**: Price charts and trends
-
-### KYC Services
-
-- 🟢 **BVN Verification**: NIBSS integration ready
-- 🟢 **NIN Validation**: NIMC integration ready
-- 🟢 **Bank Verification**: Live account checks
-
-## 🎯 Key Differences from Demo Apps
-
-| Feature          | Demo Apps    | InvestNaija Production       |
-| ---------------- | ------------ | ---------------------------- |
-| Payments         | Fake/Mock    | Real Paystack/Flutterwave    |
-| Database         | In-memory    | Persistent SQLite            |
-| Crypto Prices    | Static       | Live CoinGecko API           |
-| User Balance     | Free money   | Real deposits only           |
-| KYC              | Dummy checks | Actual BVN/NIN verification  |
-| Bank Integration | Mock data    | Live Nigerian banks          |
-| Security         | Basic        | bcrypt + JWT + Rate limiting |
-| Transactions     | Simulated    | Real payment processing      |
-
-## 🔧 Troubleshooting
-
-### Common Issues Fixed
-
-1. **Authentication Errors (401)**
-
-   - ✅ Fixed: Proper bcrypt hashing
-   - ✅ Fixed: Working admin/demo credentials
-   - ✅ Fixed: Persistent sessions
-
-2. **Payment Processing**
-
-   - ✅ Fixed: Real Paystack integration
-   - ✅ Fixed: Removed manual funding
-   - ✅ Fixed: Live transaction verification
-
-3. **Database Issues**
-   - ✅ Fixed: SQLite persistence
-   - ✅ Fixed: Proper schema initialization
-   - ✅ Fixed: User session management
+- **Frontend**: Lazy loading and code splitting
+- **Backend**: Efficient database queries and caching
+- **Real-time**: Optimized WebSocket connections
+- **Mobile**: Native performance optimizations
 
 ## 🤝 Contributing
 
-This is a production-ready fintech platform. Contributions should maintain:
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-- Real payment integration standards
-- Security best practices
-- Nigerian banking compliance
-- Zero dummy/test data
-- Production-grade code quality
+### **Development Setup**
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new features
+5. Submit a pull request
 
 ## 📄 License
 
-MIT License - See LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📞 Support
+## 🆘 Support
 
-- **Technical Issues**: Create GitHub issue
-- **Payment Integration**: Check Paystack/Flutterwave docs
-- **Nigerian Banking**: Verify bank API endpoints
-- **Security Concerns**: Follow security@investnaija.com
+- **Documentation**: See `/docs` folder for detailed guides
+- **Issues**: GitHub Issues for bug reports
+- **Discussions**: GitHub Discussions for questions
+- **Email**: support@investnaija.com
+
+## 🗺️ Roadmap
+
+### **Q1 2025**
+
+- [ ] Advanced AI financial advisory
+- [ ] Enhanced crypto trading features
+- [ ] Mobile app v2.0
+- [ ] Advanced business banking
+
+### **Q2 2025**
+
+- [ ] Multi-language support
+- [ ] Advanced analytics dashboard
+- [ ] Third-party integrations
+- [ ] Enhanced security features
 
 ---
 
-**🇳🇬 Built for Real Nigerian Financial Services**
+**Built with ❤️ for the Nigerian fintech ecosystem**
 
-_This is a production-ready platform with actual payment processing, genuine KYC verification, and live market data. No dummy features - only real financial transactions._
-
-**Current Status**: ✅ Production Ready | 🔒 Secure | 💳 Real Payments | 🏦 Nigerian Banks Integrated
-// Commit 2 - 1752188000
-// Commit 10 - 1752188000
-// Commit 24 - 1752188003
-// Commit 34 - 1752188003
-// Commit 48 - 1752188005
-// Commit 50 - 1752188005
-// Commit 51 - 1752188005
-// Commit 53 - 1752188005
-// Commit 71 - 1752188007
-// Commit 75 - 1752188007
-// Commit 77 - 1752188007
-// Commit 82 - 1752188008
-// Commit 84 - 1752188008
-// Commit 110 - 1752188009
-// Commit 126 - 1752188011
-// Commit 127 - 1752188011
-// Commit 145 - 1752188012
-// Commit 147 - 1752188012
-// Commit 149 - 1752188012
-// Commit 158 - 1752188013
-// Commit 165 - 1752188013
-// Commit 171 - 1752188013
-// Commit 174 - 1752188014
-// Commit 188 - 1752188014
-// Commit 191 - 1752188015
-// Commit 201 - 1752188016
-// Commit 203 - 1752188016
-// Commit 210 - 1752188017
-// Commit 215 - 1752188017
-// Commit 217 - 1752188017
-// Commit 218 - 1752188017
-// Commit 220 - 1752188017
-// Commit 226 - 1752188018
-// Commit 231 - 1752188018
-// Commit 266 - 1752188020
-// Commit 267 - 1752188020
-// Commit 273 - 1752188020
-// Commit 282 - 1752188022
-// Commit 291 - 1752188022
-// Commit 304 - 1752188023
-// Commit 309 - 1752188023
-// Commit 311 - 1752188023
-// Commit 320 - 1752188024
-// Commit 329 - 1752188024
-// Commit 339 - 1752188025
-// Commit 341 - 1752188026
-// Commit 348 - 1752188027
-// Commit 352 - 1752188028
-// Commit 360 - 1752188028
-// Commit 373 - 1752188029
-// Commit 374 - 1752188029
-// Commit 382 - 1752188030
-// Commit 388 - 1752188030
-// Commit 391 - 1752188030
-// Commit 397 - 1752188031
-// Commit 406 - 1752188032
-// Commit 409 - 1752188032
-// Commit 411 - 1752188032
-// Commit 419 - 1752188033
-// December commit 45 - 1752189174
-// December commit 56 - 1752189178
-// December commit 57 - 1752189178
-// December commit 59 - 1752189179
-// December commit 70 - 1752189182
-// December commit 74 - 1752189183
-// December commit 80 - 1752189185
-// December commit 81 - 1752189185
-// December commit 95 - 1752189188
-// 2023 commit 5 - 1752189199
-// 2023 commit 6 - 1752189199
-// 2023 commit 22 - 1752189202
-// 2023 commit 23 - 1752189202
-// 2023 commit 43 - 1752189209
-// 2023 commit 46 - 1752189210
-// 2023 commit 62 - 1752189216
-// 2023 commit 67 - 1752189218
-// 2023 commit 84 - 1752189224
-// 2023 commit 89 - 1752189224
-// 2023 commit 90 - 1752189224
-// 2023 commit 109 - 1752189228
-// 2023 commit 110 - 1752189228
-// 2023 commit 116 - 1752189229
-// 2023 commit 119 - 1752189230
-// 2023 commit 127 - 1752189232
-// 2023 commit 132 - 1752189234
-// 2023 commit 150 - 1752189237
-// 2023 commit 173 - 1752189244
-// 2023 commit 188 - 1752189246
-// 2023 commit 192 - 1752189247
-// 2023 commit 217 - 1752189250
-// 2023 commit 219 - 1752189251
-// 2023 commit 239 - 1752189255
-// 2023 commit 241 - 1752189255
-// 2023 commit 248 - 1752189257
-// 2023 commit 265 - 1752189259
-// 2023 commit 267 - 1752189259
-// 2023 commit 286 - 1752189262
-// 2023 commit 293 - 1752189263
-// 2023 commit 302 - 1752189264
-// 2023 commit 314 - 1752189267
-// 2023 commit 317 - 1752189268
-// 2023 commit 320 - 1752189269
-// 2023 commit 323 - 1752189269
-// 2023 commit 331 - 1752189272
-// 2023 commit 334 - 1752189273
-// 2023 commit 335 - 1752189273
-// 2023 commit 337 - 1752189274
-// December commit 6 - 1752189481
-// December commit 8 - 1752189481
-// December commit 41 - 1752189487
-// December commit 50 - 1752189489
-// December commit 66 - 1752189491
-// December commit 75 - 1752189493
-// December commit 81 - 1752189493
-// December commit 113 - 1752189497
-// December commit 123 - 1752189499
-// Past year commit 5 - 1752189503
-// Past year commit 11 - 1752189504
-// Past year commit 25 - 1752189506
-// Past year commit 27 - 1752189506
-// Past year commit 46 - 1752189510
-// Past year commit 47 - 1752189510
-// Past year commit 51 - 1752189510
-// Past year commit 52 - 1752189511
-// Past year commit 60 - 1752189511
-// Past year commit 74 - 1752189512
-// Past year commit 95 - 1752189515
-// Past year commit 113 - 1752189517
-// Past year commit 115 - 1752189517
-// Past year commit 123 - 1752189518
-// Past year commit 135 - 1752189521
-// Past year commit 144 - 1752189522
-// Past year commit 148 - 1752189522
-// Past year commit 165 - 1752189525
-// Past year commit 180 - 1752189527
-// Past year commit 183 - 1752189527
-// Past year commit 190 - 1752189528
-// Past year commit 191 - 1752189528
-// Past year commit 224 - 1752189532
-// Past year commit 250 - 1752189536
-// Past year commit 255 - 1752189536
-// Past year commit 262 - 1752189537
-// Past year commit 286 - 1752189540
-// Past year commit 290 - 1752189541
-// Past year commit 300 - 1752189542
-// Past year commit 301 - 1752189542
-// Past year commit 329 - 1752189545
-// Past year commit 330 - 1752189545
-// Past year commit 332 - 1752189545
-// Past year commit 342 - 1752189546
-// Past year commit 343 - 1752189546
-// Past year commit 344 - 1752189546
+_InvestNaija - Empowering Financial Growth in Nigeria_
