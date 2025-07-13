@@ -817,3 +817,69 @@ export const getUserNotificationsFromDB = (
     metadata: n.metadata ? JSON.parse(n.metadata) : undefined,
   }));
 };
+
+// Initialize sample data
+export const createSampleChallenges = () => {
+  const challenges = [
+    {
+      id: randomUUID(),
+      title: "30-Day Savings Challenge",
+      description: "Save ₦1,000 more each day for 30 days",
+      targetAmount: 30000,
+      duration: 30,
+      startDate: "2024-12-01",
+      endDate: "2024-12-31",
+      status: "active",
+      category: "savings",
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: randomUUID(),
+      title: "Investment Growth Challenge",
+      description: "Invest ₦50,000 and track your returns over 3 months",
+      targetAmount: 50000,
+      duration: 90,
+      startDate: "2024-12-01",
+      endDate: "2025-03-01",
+      status: "active",
+      category: "investment",
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: randomUUID(),
+      title: "Zero Spending Week",
+      description:
+        "Challenge yourself to spend only on essentials for one week",
+      targetAmount: 0,
+      duration: 7,
+      startDate: "2024-12-16",
+      endDate: "2024-12-23",
+      status: "upcoming",
+      category: "spending",
+      createdAt: new Date().toISOString(),
+    },
+  ];
+
+  const stmt = db.prepare(`
+    INSERT OR IGNORE INTO financial_challenges
+    (id, title, description, targetAmount, duration, startDate, endDate, status, category, createdAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  challenges.forEach((challenge) => {
+    stmt.run(
+      challenge.id,
+      challenge.title,
+      challenge.description,
+      challenge.targetAmount,
+      challenge.duration,
+      challenge.startDate,
+      challenge.endDate,
+      challenge.status,
+      challenge.category,
+      challenge.createdAt,
+    );
+  });
+
+  console.log("✅ Sample financial challenges created");
+};
