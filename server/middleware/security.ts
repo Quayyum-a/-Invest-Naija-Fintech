@@ -417,3 +417,222 @@ export const notFoundHandler = (req: Request, res: Response) => {
     error: `Route ${req.method} ${req.path} not found`,
   } as ErrorResponse);
 };
+
+// Fraud detection middleware
+const suspiciousActivityStore = new Map<
+  string,
+  {
+    loginAttempts: number;
+    transactionCount: number;
+    lastActivity: number;
+    flagged: boolean;
+  }
+>();
+
+export const fraudDetection = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const ip = req.ip || req.connection.remoteAddress || "unknown";
+  const userId = req.user?.id;
+  const identifier = userId || ip;
+  const now = Date.now();
+
+  let activity = suspiciousActivityStore.get(identifier);
+  if (!activity) {
+    activity = {
+      loginAttempts: 0,
+      transactionCount: 0,
+      lastActivity: now,
+      flagged: false,
+    };
+  }
+
+  // Reset counters if more than 1 hour has passed
+  if (now - activity.lastActivity > 60 * 60 * 1000) {
+    activity.loginAttempts = 0;
+    activity.transactionCount = 0;
+    activity.flagged = false;
+  }
+
+  // Track login attempts
+  if (req.path.includes("/auth/login")) {
+    activity.loginAttempts++;
+    if (activity.loginAttempts > 10) {
+      activity.flagged = true;
+      console.warn(`FRAUD ALERT: Excessive login attempts from ${identifier}`);
+    }
+  }
+
+  // Track transaction volume
+  if (
+    req.path.includes("/wallet/") ||
+    req.path.includes("/transfer/") ||
+    req.path.includes("/bills/")
+  ) {
+    activity.transactionCount++;
+    if (activity.transactionCount > 50) {
+      activity.flagged = true;
+      console.warn(
+        `FRAUD ALERT: Excessive transaction attempts from ${identifier}`,
+      );
+    }
+  }
+
+  // Block flagged users
+  if (activity.flagged) {
+    return res.status(429).json({
+      success: false,
+      error:
+        "Account temporarily restricted due to suspicious activity. Please contact support.",
+    });
+  }
+
+  activity.lastActivity = now;
+  suspiciousActivityStore.set(identifier, activity);
+  next();
+};
+
+// Geolocation validation middleware
+export const geoValidation = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  // This would integrate with a geolocation service in production
+  // For now, we'll just check for common VPN/proxy headers
+  const suspiciousHeaders = [
+    "x-forwarded-for",
+    "x-real-ip",
+    "cf-connecting-ip",
+    "x-cluster-client-ip",
+  ];
+
+  const hasSuspiciousHeaders = suspiciousHeaders.some(
+    (header) =>
+      req.headers[header] && String(req.headers[header]).includes(","),
+  );
+
+  if (hasSuspiciousHeaders && req.path.includes("/auth/")) {
+    console.warn(`GEO ALERT: Potential proxy/VPN access from ${req.ip}`);
+    // Log but don't block in development
+  }
+
+  next();
+};
+
+// Device fingerprinting middleware
+export const deviceFingerprinting = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const userAgent = req.get("User-Agent") || "";
+  const acceptLanguage = req.get("Accept-Language") || "";
+  const acceptEncoding = req.get("Accept-Encoding") || "";
+
+  // Detect suspicious user agents
+  const suspiciousPatterns = [
+    /curl/i,
+    /wget/i,
+    /python/i,
+    /postman/i,
+    /insomnia/i,
+  ];
+
+  if (suspiciousPatterns.some((pattern) => pattern.test(userAgent))) {
+    console.warn(
+      `DEVICE ALERT: Automated tool detected: ${userAgent} from ${req.ip}`,
+    );
+    // Log but don't block for now
+  }
+
+  // Store device fingerprint for future reference
+  req.deviceFingerprint = {
+    userAgent,
+    acceptLanguage,
+    acceptEncoding,
+    ip: req.ip || "unknown",
+  };
+
+  next();
+};
+
+// Advanced logging middleware for security events
+export const securityLogger = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const start = Date.now();
+  const ip = req.ip || req.connection.remoteAddress || "unknown";
+  const userAgent = req.get("User-Agent") || "unknown";
+  const userId = req.user?.id || "anonymous";
+
+  // Log security-sensitive operations
+  const sensitiveOperations = [
+    "/auth/",
+    "/wallet/",
+    "/transfer/",
+    "/bills/",
+    "/kyc/",
+    "/admin/",
+  ];
+
+  const isSensitive = sensitiveOperations.some((op) => req.path.includes(op));
+
+  if (isSensitive) {
+    console.log(
+      `SECURITY: ${new Date().toISOString()} - ${req.method} ${req.path} - User: ${userId} - IP: ${ip} - UA: ${userAgent}`,
+    );
+  }
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+
+    // Log failed authentication attempts
+    if (
+      req.path.includes("/auth/") &&
+      (res.statusCode === 401 || res.statusCode === 403)
+    ) {
+      console.warn(
+        `AUTH FAILURE: ${new Date().toISOString()} - ${req.method} ${req.path} - ${res.statusCode} - IP: ${ip} - UA: ${userAgent}`,
+      );
+    }
+
+    // Log successful high-value transactions
+    if (
+      req.path.includes("/wallet/") &&
+      res.statusCode === 200 &&
+      req.body?.amount > 100000
+    ) {
+      console.log(
+        `HIGH VALUE: ${new Date().toISOString()} - ${req.method} ${req.path} - Amount: ₦${req.body.amount} - User: ${userId} - IP: ${ip}`,
+      );
+    }
+
+    // Log suspicious response times
+    if (duration > 10000) {
+      console.warn(
+        `SLOW RESPONSE: ${req.method} ${req.path} took ${duration}ms - Potential DoS or heavy load`,
+      );
+    }
+  });
+
+  next();
+};
+
+// Extend Express Request interface
+declare global {
+  namespace Express {
+    interface Request {
+      deviceFingerprint?: {
+        userAgent: string;
+        acceptLanguage: string;
+        acceptEncoding: string;
+        ip: string;
+      };
+    }
+  }
+}
