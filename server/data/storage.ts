@@ -570,3 +570,250 @@ export const getPendingKYCCount = (): number => {
   const result = stmt.get() as any;
   return result.count || 0;
 };
+
+// Social Banking Functions
+export const createSocialGroup = (groupData: {
+  name: string;
+  description?: string;
+  targetAmount: number;
+  createdBy: string;
+  endDate?: string;
+  category?: string;
+}) => {
+  const groupId = randomUUID();
+  const now = new Date().toISOString();
+
+  const stmt = db.prepare(`
+    INSERT INTO social_groups (id, name, description, targetAmount, createdBy, endDate, category, createdAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  stmt.run(
+    groupId,
+    groupData.name,
+    groupData.description || "",
+    groupData.targetAmount,
+    groupData.createdBy,
+    groupData.endDate || "",
+    groupData.category || "general",
+    now,
+  );
+
+  // Add creator as first member
+  const memberStmt = db.prepare(`
+    INSERT INTO group_members (id, groupId, userId, joinedAt)
+    VALUES (?, ?, ?, ?)
+  `);
+  memberStmt.run(randomUUID(), groupId, groupData.createdBy, now);
+
+  return {
+    id: groupId,
+    ...groupData,
+    currentAmount: 0,
+    status: "active",
+    createdAt: now,
+  };
+};
+
+export const getUserSocialGroups = (userId: string) => {
+  const stmt = db.prepare(`
+    SELECT sg.*,
+           COUNT(gm.id) as memberCount,
+           SUM(gm.contribution) as totalContributions
+    FROM social_groups sg
+    LEFT JOIN group_members gm ON sg.id = gm.groupId
+    WHERE sg.id IN (
+      SELECT groupId FROM group_members WHERE userId = ? AND status = 'active'
+    )
+    GROUP BY sg.id
+    ORDER BY sg.createdAt DESC
+  `);
+  return stmt.all(userId) as any[];
+};
+
+export const getGroupMembers = (groupId: string) => {
+  const stmt = db.prepare(`
+    SELECT gm.*, u.firstName, u.lastName, u.email
+    FROM group_members gm
+    JOIN users u ON gm.userId = u.id
+    WHERE gm.groupId = ? AND gm.status = 'active'
+    ORDER BY gm.contribution DESC
+  `);
+  return stmt.all(groupId) as any[];
+};
+
+export const createMoneyRequest = (requestData: {
+  fromUserId: string;
+  toUserId: string;
+  amount: number;
+  reason: string;
+  dueDate?: string;
+}) => {
+  const requestId = randomUUID();
+  const now = new Date().toISOString();
+
+  const stmt = db.prepare(`
+    INSERT INTO money_requests (id, fromUserId, toUserId, amount, reason, dueDate, createdAt, updatedAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  stmt.run(
+    requestId,
+    requestData.fromUserId,
+    requestData.toUserId,
+    requestData.amount,
+    requestData.reason,
+    requestData.dueDate || "",
+    now,
+    now,
+  );
+
+  return {
+    id: requestId,
+    ...requestData,
+    status: "pending",
+    createdAt: now,
+    updatedAt: now,
+  };
+};
+
+export const getUserMoneyRequests = (userId: string) => {
+  const stmt = db.prepare(`
+    SELECT mr.*,
+           uf.firstName as fromFirstName, uf.lastName as fromLastName,
+           ut.firstName as toFirstName, ut.lastName as toLastName
+    FROM money_requests mr
+    JOIN users uf ON mr.fromUserId = uf.id
+    JOIN users ut ON mr.toUserId = ut.id
+    WHERE mr.fromUserId = ? OR mr.toUserId = ?
+    ORDER BY mr.createdAt DESC
+  `);
+  return stmt.all(userId, userId) as any[];
+};
+
+export const createSocialPayment = (paymentData: {
+  fromUserId: string;
+  toUserId: string;
+  amount: number;
+  message?: string;
+  type: string;
+  isPublic?: boolean;
+}) => {
+  const paymentId = randomUUID();
+  const now = new Date().toISOString();
+
+  const stmt = db.prepare(`
+    INSERT INTO social_payments (id, fromUserId, toUserId, amount, message, type, isPublic, createdAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  stmt.run(
+    paymentId,
+    paymentData.fromUserId,
+    paymentData.toUserId,
+    paymentData.amount,
+    paymentData.message || "",
+    paymentData.type,
+    paymentData.isPublic || false,
+    now,
+  );
+
+  return { id: paymentId, ...paymentData, createdAt: now };
+};
+
+export const getUserSocialPayments = (userId: string) => {
+  const stmt = db.prepare(`
+    SELECT sp.*,
+           uf.firstName as fromFirstName, uf.lastName as fromLastName,
+           ut.firstName as toFirstName, ut.lastName as toLastName
+    FROM social_payments sp
+    JOIN users uf ON sp.fromUserId = uf.id
+    JOIN users ut ON sp.toUserId = ut.id
+    WHERE sp.fromUserId = ? OR sp.toUserId = ? OR sp.isPublic = true
+    ORDER BY sp.createdAt DESC
+    LIMIT 50
+  `);
+  return stmt.all(userId, userId) as any[];
+};
+
+export const getFinancialChallenges = () => {
+  const stmt = db.prepare(`
+    SELECT fc.*, COUNT(cp.id) as participantCount
+    FROM financial_challenges fc
+    LEFT JOIN challenge_participants cp ON fc.id = cp.challengeId
+    GROUP BY fc.id
+    ORDER BY fc.createdAt DESC
+  `);
+  return stmt.all() as any[];
+};
+
+export const getChallengeParticipants = (challengeId: string) => {
+  const stmt = db.prepare(`
+    SELECT cp.*, u.firstName, u.lastName
+    FROM challenge_participants cp
+    JOIN users u ON cp.userId = u.id
+    WHERE cp.challengeId = ?
+    ORDER BY cp.progress DESC, cp.joinedAt ASC
+  `);
+  return stmt.all(challengeId) as any[];
+};
+
+// Notification Functions
+export const createNotification = (notificationData: {
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  priority?: string;
+  metadata?: any;
+}) => {
+  const notificationId = randomUUID();
+  const now = new Date().toISOString();
+
+  const stmt = db.prepare(`
+    INSERT INTO notifications (id, userId, title, message, type, priority, metadata, createdAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  stmt.run(
+    notificationId,
+    notificationData.userId,
+    notificationData.title,
+    notificationData.message,
+    notificationData.type,
+    notificationData.priority || "normal",
+    notificationData.metadata
+      ? JSON.stringify(notificationData.metadata)
+      : null,
+    now,
+  );
+
+  return {
+    id: notificationId,
+    ...notificationData,
+    read: false,
+    createdAt: now,
+  };
+};
+
+export const getUserNotificationsFromDB = (
+  userId: string,
+  limit: number = 50,
+  unreadOnly: boolean = false,
+) => {
+  const whereClause = unreadOnly
+    ? "WHERE userId = ? AND read = false"
+    : "WHERE userId = ?";
+  const stmt = db.prepare(`
+    SELECT * FROM notifications
+    ${whereClause}
+    ORDER BY createdAt DESC
+    LIMIT ?
+  `);
+
+  const notifications = stmt.all(userId, limit) as any[];
+  return notifications.map((n) => ({
+    ...n,
+    metadata: n.metadata ? JSON.parse(n.metadata) : undefined,
+  }));
+};
