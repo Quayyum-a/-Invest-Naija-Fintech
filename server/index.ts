@@ -411,6 +411,15 @@ export function createServer() {
   app.put("/admin/users/:userId/kyc", authenticateToken, updateUserKYC);
   app.put("/admin/users/:userId/status", authenticateToken, updateUserStatus);
 
+  // Social banking routes (protected)
+  app.get("/social/groups", authenticateToken, getSocialGroups);
+  app.post("/social/groups", authenticateToken, createGroup);
+  app.get("/social/requests", authenticateToken, getMoneyRequests);
+  app.post("/social/requests", authenticateToken, requestMoney);
+  app.get("/social/payments", authenticateToken, getSocialPayments);
+  app.post("/social/payments", authenticateToken, sendMoney);
+  app.get("/social/challenges", authenticateToken, getChallenges);
+
   // Initialize app on first startup
   try {
     initializeApp();
