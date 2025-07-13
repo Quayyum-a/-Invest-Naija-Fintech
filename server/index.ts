@@ -216,9 +216,9 @@ export function createServer() {
   app.get("/transactions", authenticateToken, getTransactions);
 
   // Financial services routes
-  app.get("/api/services", getServices);
+  app.get("/services", getServices);
   app.post(
-    "/api/services/airtime",
+    "/services/airtime",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
@@ -226,7 +226,7 @@ export function createServer() {
     buyAirtimeService,
   );
   app.post(
-    "/api/services/data",
+    "/services/data",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
@@ -234,24 +234,24 @@ export function createServer() {
     buyData,
   );
   app.post(
-    "/api/services/bills",
+    "/services/bills",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     payBill,
   );
   app.post(
-    "/api/services/transfer",
+    "/services/transfer",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     bankTransfer,
   );
-  app.post("/api/services/verify-account", authenticateToken, verifyAccount);
+  app.post("/services/verify-account", authenticateToken, verifyAccount);
 
   // Dashboard and portfolio data
-  app.get("/api/dashboard", authenticateToken, getDashboardData);
-  app.get("/api/portfolio", authenticateToken, getPortfolioData);
+  app.get("/dashboard", authenticateToken, getDashboardData);
+  app.get("/portfolio", authenticateToken, getPortfolioData);
 
   // Investment routes (protected)
   app.get("/api/investments/products", getInvestmentProducts);
