@@ -254,15 +254,11 @@ export function createServer() {
   app.get("/portfolio", authenticateToken, getPortfolioData);
 
   // Investment routes (protected)
-  app.get("/api/investments/products", getInvestmentProducts);
-  app.post(
-    "/api/investments/roundup",
-    authenticateToken,
-    createRoundUpInvestment,
-  );
-  app.post("/api/investments/withdraw", authenticateToken, withdrawInvestment);
+  app.get("/investments/products", getInvestmentProducts);
+  app.post("/investments/roundup", authenticateToken, createRoundUpInvestment);
+  app.post("/investments/withdraw", authenticateToken, withdrawInvestment);
   app.get(
-    "/api/investments/performance",
+    "/investments/performance",
     authenticateToken,
     getInvestmentPerformance,
   );
