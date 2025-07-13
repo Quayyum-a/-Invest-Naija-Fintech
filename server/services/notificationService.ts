@@ -90,15 +90,19 @@ export class NotificationService {
   }
 
   private async sendInAppNotification(notification: NotificationData) {
-    this.io.to(`user-${notification.userId}`).emit("notification", {
-      id: Date.now().toString(),
-      type: notification.type,
-      title: notification.title,
-      message: notification.message,
-      data: notification.data,
-      timestamp: new Date().toISOString(),
-      read: false,
-    });
+    // TODO: Enable when socket.io is installed
+    // this.io.to(`user-${notification.userId}`).emit("notification", {
+    //   id: Date.now().toString(),
+    //   type: notification.type,
+    //   title: notification.title,
+    //   message: notification.message,
+    //   data: notification.data,
+    //   timestamp: new Date().toISOString(),
+    //   read: false,
+    // });
+    console.log(
+      `Would send in-app notification to user ${notification.userId}: ${notification.title}`,
+    );
   }
 
   private async sendPushNotification(notification: NotificationData) {
