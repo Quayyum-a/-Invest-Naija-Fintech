@@ -264,127 +264,118 @@ export function createServer() {
   );
 
   // KYC routes (protected)
-  app.post("/api/kyc/submit", authenticateToken, submitKYCDocuments);
-  app.get("/api/kyc/status", authenticateToken, getKYCStatus);
-  app.post("/api/kyc/upload", authenticateToken, uploadKYCDocument);
+  app.post("/kyc/submit", authenticateToken, submitKYCDocuments);
+  app.get("/kyc/status", authenticateToken, getKYCStatus);
+  app.post("/kyc/upload", authenticateToken, uploadKYCDocument);
 
   // Payment routes
-  app.get("/api/payments/banks", getBanks);
+  app.get("/payments/banks", getBanks);
   app.post(
-    "/api/payments/paystack/initiate",
+    "/payments/paystack/initiate",
     authenticateToken,
     initiatePaystackPayment,
   );
   app.get(
-    "/api/payments/paystack/verify/:reference",
+    "/payments/paystack/verify/:reference",
     authenticateToken,
     handlePaystackCallback,
   );
-  app.post("/api/payments/paystack/callback", handlePaystackCallback);
-  app.post("/api/payments/verify-account", authenticateToken, linkBankAccount);
-  app.post("/api/payments/verify-bvn", authenticateToken, verifyBVN);
-  app.post("/api/payments/verify-nin", authenticateToken, verifyNIN);
-  app.post("/api/payments/link-bank", authenticateToken, linkBankAccount);
+  app.post("/payments/paystack/callback", handlePaystackCallback);
+  app.post("/payments/verify-account", authenticateToken, linkBankAccount);
+  app.post("/payments/verify-bvn", authenticateToken, verifyBVN);
+  app.post("/payments/verify-nin", authenticateToken, verifyNIN);
+  app.post("/payments/link-bank", authenticateToken, linkBankAccount);
+  app.post("/payments/bank-transfer", authenticateToken, initiateBankTransfer);
   app.post(
-    "/api/payments/bank-transfer",
-    authenticateToken,
-    initiateBankTransfer,
-  );
-  app.post(
-    "/api/payments/virtual-account",
+    "/payments/virtual-account",
     authenticateToken,
     generateVirtualAccount,
   );
 
   // Analytics routes (protected)
-  app.get("/api/analytics/user", authenticateToken, getUserAnalytics);
-  app.get("/api/analytics/app", authenticateToken, getAppAnalytics);
+  app.get("/analytics/user", authenticateToken, getUserAnalytics);
+  app.get("/analytics/app", authenticateToken, getAppAnalytics);
 
   // Notification routes (protected)
-  app.get("/api/notifications", authenticateToken, getUserNotifications);
+  app.get("/notifications", authenticateToken, getUserNotifications);
   app.put(
-    "/api/notifications/:notificationId/read",
+    "/notifications/:notificationId/read",
     authenticateToken,
     markNotificationRead,
   );
   app.put(
-    "/api/notifications/mark-all-read",
+    "/notifications/mark-all-read",
     authenticateToken,
     markAllNotificationsRead,
   );
   app.delete(
-    "/api/notifications/:notificationId",
+    "/notifications/:notificationId",
     authenticateToken,
     deleteNotification,
   );
 
   // Round-up investment routes (protected)
-  app.get("/api/roundup/settings", authenticateToken, getRoundupSettings);
-  app.put("/api/roundup/settings", authenticateToken, updateRoundupSettings);
+  app.get("/roundup/settings", authenticateToken, getRoundupSettings);
+  app.put("/roundup/settings", authenticateToken, updateRoundupSettings);
   app.post(
-    "/api/roundup/process",
+    "/roundup/process",
     authenticateToken,
     transactionRateLimit,
     processRoundup,
   );
-  app.get("/api/roundup/stats", authenticateToken, getRoundupStats);
+  app.get("/roundup/stats", authenticateToken, getRoundupStats);
   app.post(
-    "/api/roundup/invest",
+    "/roundup/invest",
     authenticateToken,
     transactionRateLimit,
     investRoundups,
   );
 
   // Gamification routes (protected)
-  app.get("/api/achievements", authenticateToken, getUserAchievements);
-  app.get("/api/leaderboard", authenticateToken, getLeaderboard);
-  app.get("/api/level", authenticateToken, getUserLevel);
-  app.post("/api/achievements/claim", authenticateToken, claimReward);
+  app.get("/achievements", authenticateToken, getUserAchievements);
+  app.get("/leaderboard", authenticateToken, getLeaderboard);
+  app.get("/level", authenticateToken, getUserLevel);
+  app.post("/achievements/claim", authenticateToken, claimReward);
 
   // Crypto routes
-  app.get("/api/crypto/market", getCryptoMarketData);
-  app.get("/api/crypto/holdings", authenticateToken, getUserCryptoHoldings);
+  app.get("/crypto/market", getCryptoMarketData);
+  app.get("/crypto/holdings", authenticateToken, getUserCryptoHoldings);
   app.post(
-    "/api/crypto/buy",
+    "/crypto/buy",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     buyCrypto,
   );
-  app.post(
-    "/api/crypto/sell",
-    authenticateToken,
-    transactionRateLimit,
-    sellCrypto,
-  );
+  app.post("/crypto/sell", authenticateToken, transactionRateLimit, sellCrypto);
 
   // Bill payment routes
-  app.get("/api/bills/billers", getBillers);
-  app.get("/api/bills/electricity/companies", getElectricityCompanies);
-  app.post("/api/bills/validate-customer", validateCustomer);
+  app.get("/bills/billers", getBillers);
+  app.get("/bills/electricity/companies", getElectricityCompanies);
+  app.post("/bills/validate-customer", validateCustomer);
   app.post(
-    "/api/bills/pay-electricity",
+    "/bills/pay-electricity",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     payElectricityBill,
   );
   app.post(
-    "/api/bills/buy-airtime",
+    "/bills/buy-airtime",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     buyAirtime,
   );
   app.post(
-    "/api/bills/buy-data",
+    "/bills/buy-data",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     buyDataBundle,
   );
   app.post(
-    "/api/bills/pay-cable-tv",
+    "/bills/pay-cable-tv",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
@@ -392,10 +383,10 @@ export function createServer() {
   );
 
   // Transfer routes
-  app.get("/api/transfer/banks", getBanksForTransfer);
-  app.post("/api/transfer/verify-account", verifyTransferAccount);
+  app.get("/transfer/banks", getBanksForTransfer);
+  app.post("/transfer/verify-account", verifyTransferAccount);
   app.post(
-    "/api/transfer/initiate",
+    "/transfer/initiate",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
@@ -403,15 +394,11 @@ export function createServer() {
   );
 
   // Admin routes (protected)
-  app.get("/api/admin/stats", authenticateToken, getAdminStats);
-  app.get("/api/admin/users", authenticateToken, getAllUsersAdmin);
-  app.get("/api/admin/users/:userId", authenticateToken, getUserDetails);
-  app.put("/api/admin/users/:userId/kyc", authenticateToken, updateUserKYC);
-  app.put(
-    "/api/admin/users/:userId/status",
-    authenticateToken,
-    updateUserStatus,
-  );
+  app.get("/admin/stats", authenticateToken, getAdminStats);
+  app.get("/admin/users", authenticateToken, getAllUsersAdmin);
+  app.get("/admin/users/:userId", authenticateToken, getUserDetails);
+  app.put("/admin/users/:userId/kyc", authenticateToken, updateUserKYC);
+  app.put("/admin/users/:userId/status", authenticateToken, updateUserStatus);
 
   // Initialize app on first startup
   try {
