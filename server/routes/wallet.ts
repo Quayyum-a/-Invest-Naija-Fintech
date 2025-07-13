@@ -433,3 +433,252 @@ export const getPortfolioData: RequestHandler = (req, res) => {
     } as ErrorResponse);
   }
 };
+
+// Enhanced wallet endpoints with real-time features
+
+export const initiateWalletFunding: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const userEmail = req.user?.email;
+
+    if (!userId || !userEmail) {
+      return res.status(401).json({
+        success: false,
+        error: "User not authenticated",
+      });
+    }
+
+    const { amount, provider = "paystack" } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid amount",
+      });
+    }
+
+    if (amount < 100) {
+      return res.status(400).json({
+        success: false,
+        error: "Minimum funding amount is ₦100",
+      });
+    }
+
+    const result = await paymentsService.initializePaystackPayment(
+      userId,
+      amount,
+      userEmail,
+    );
+
+    if (result.success) {
+      res.json({
+        success: true,
+        data: result.data,
+        message: "Payment initialization successful",
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Initiate wallet funding error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+};
+
+export const verifyWalletFunding: RequestHandler = async (req, res) => {
+  try {
+    const { reference } = req.params;
+
+    if (!reference) {
+      return res.status(400).json({
+        success: false,
+        error: "Payment reference is required",
+      });
+    }
+
+    const result = await paymentsService.verifyPaystackPayment(reference);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        data: result.data,
+        message: "Payment verified successfully",
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Verify wallet funding error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+};
+
+export const transferToUser: RequestHandler = async (req, res) => {
+  try {
+    const fromUserId = req.user?.id;
+    if (!fromUserId) {
+      return res.status(401).json({
+        success: false,
+        error: "User not authenticated",
+      });
+    }
+
+    const { toUserIdentifier, amount, description } = req.body;
+
+    if (!toUserIdentifier || !amount) {
+      return res.status(400).json({
+        success: false,
+        error: "Recipient and amount are required",
+      });
+    }
+
+    // Validate transfer
+    const validation = await walletService.validateTransfer(
+      fromUserId,
+      toUserIdentifier,
+      amount,
+    );
+
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        error: validation.error,
+      });
+    }
+
+    // For demo purposes, use a mock user ID
+    // In production, implement user lookup by phone/email
+    const toUserId = "demo-recipient-id";
+
+    const result = await walletService.transferFunds(
+      fromUserId,
+      toUserId,
+      amount,
+      description,
+    );
+
+    if (result.success) {
+      res.json({
+        success: true,
+        transaction: result.transaction,
+        message: "Transfer successful",
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Transfer to user error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+};
+
+export const withdrawToBank: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "User not authenticated",
+      });
+    }
+
+    const { amount, bankDetails } = req.body;
+
+    if (!amount || !bankDetails) {
+      return res.status(400).json({
+        success: false,
+        error: "Amount and bank details are required",
+      });
+    }
+
+    const result = await walletService.withdrawToBank(
+      userId,
+      amount,
+      bankDetails,
+    );
+
+    if (result.success) {
+      res.json({
+        success: true,
+        transaction: result.transaction,
+        message: "Withdrawal initiated successfully",
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Withdraw to bank error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+};
+
+export const getTransactionHistory: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "User not authenticated",
+      });
+    }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const filters = {
+      type: req.query.type as string,
+      status: req.query.status as string,
+      startDate: req.query.startDate as string,
+      endDate: req.query.endDate as string,
+    };
+
+    const result = await walletService.getTransactionHistory(
+      userId,
+      page,
+      limit,
+      filters,
+    );
+
+    if (result.success) {
+      res.json({
+        success: true,
+        transactions: result.transactions,
+        pagination: result.pagination,
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Get transaction history error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+};
