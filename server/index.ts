@@ -323,39 +323,44 @@ export function createServer() {
   );
 
   // Round-up investment routes (protected)
-  app.get("/roundup/settings", authenticateToken, getRoundupSettings);
-  app.put("/roundup/settings", authenticateToken, updateRoundupSettings);
+  app.get("/api/roundup/settings", authenticateToken, getRoundupSettings);
+  app.put("/api/roundup/settings", authenticateToken, updateRoundupSettings);
   app.post(
-    "/roundup/process",
+    "/api/roundup/process",
     authenticateToken,
     transactionRateLimit,
     processRoundup,
   );
-  app.get("/roundup/stats", authenticateToken, getRoundupStats);
+  app.get("/api/roundup/stats", authenticateToken, getRoundupStats);
   app.post(
-    "/roundup/invest",
+    "/api/roundup/invest",
     authenticateToken,
     transactionRateLimit,
     investRoundups,
   );
 
   // Gamification routes (protected)
-  app.get("/achievements", authenticateToken, getUserAchievements);
-  app.get("/leaderboard", authenticateToken, getLeaderboard);
-  app.get("/level", authenticateToken, getUserLevel);
-  app.post("/achievements/claim", authenticateToken, claimReward);
+  app.get("/api/achievements", authenticateToken, getUserAchievements);
+  app.get("/api/leaderboard", authenticateToken, getLeaderboard);
+  app.get("/api/level", authenticateToken, getUserLevel);
+  app.post("/api/achievements/claim", authenticateToken, claimReward);
 
   // Crypto routes
-  app.get("/crypto/market", getCryptoMarketData);
-  app.get("/crypto/holdings", authenticateToken, getUserCryptoHoldings);
+  app.get("/api/crypto/market", getCryptoMarketData);
+  app.get("/api/crypto/holdings", authenticateToken, getUserCryptoHoldings);
   app.post(
-    "/crypto/buy",
+    "/api/crypto/buy",
     authenticateToken,
     transactionRateLimit,
     validateTransactionAmount,
     buyCrypto,
   );
-  app.post("/crypto/sell", authenticateToken, transactionRateLimit, sellCrypto);
+  app.post(
+    "/api/crypto/sell",
+    authenticateToken,
+    transactionRateLimit,
+    sellCrypto,
+  );
 
   // Bill payment routes
   app.get("/bills/billers", getBillers);
