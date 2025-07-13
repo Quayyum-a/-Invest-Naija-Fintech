@@ -13,6 +13,11 @@ import {
   deleteSession,
   getSessionUser,
 } from "../data/storage";
+import {
+  registerSchema,
+  loginSchema,
+  validateSchema,
+} from "../validation/schemas";
 
 // Proper password hashing with bcrypt
 const hashPassword = async (password: string): Promise<string> => {
@@ -31,34 +36,6 @@ export const register: RequestHandler = async (req, res) => {
   try {
     const { email, password, phone, firstName, lastName }: RegisterRequest =
       req.body;
-
-    // Validation
-    if (!email || !password || !phone || !firstName || !lastName) {
-      return res.status(400).json({
-        success: false,
-        error: "All fields are required",
-      } as ErrorResponse);
-    }
-
-    // Password strength validation
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        error: "Password must be at least 8 characters long",
-      } as ErrorResponse);
-    }
-
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-
-    if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
-      return res.status(400).json({
-        success: false,
-        error:
-          "Password must contain uppercase letters, lowercase letters, and numbers",
-      } as ErrorResponse);
-    }
 
     // Check if user already exists
     const existingUser = getUserByEmail(email);
@@ -100,14 +77,6 @@ export const register: RequestHandler = async (req, res) => {
 export const login: RequestHandler = async (req, res) => {
   try {
     const { email, password }: LoginRequest = req.body;
-
-    // Validation
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: "Email and password are required",
-      } as ErrorResponse);
-    }
 
     // Find user
     const user = getUserByEmail(email);
