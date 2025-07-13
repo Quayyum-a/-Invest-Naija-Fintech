@@ -172,6 +172,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify(userData),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(
+          "Registration failed with status:",
+          response.status,
+          "Error:",
+          errorText,
+        );
+
+        try {
+          const errorData = JSON.parse(errorText);
+          return {
+            success: false,
+            message:
+              errorData.message ||
+              errorData.error ||
+              `Server error: ${response.status}`,
+          };
+        } catch {
+          return {
+            success: false,
+            message: `Server error: ${response.status} - ${errorText}`,
+          };
+        }
+      }
+
       const data: AuthResponse = await response.json();
 
       // Return the response data regardless of status - let the component handle the error
