@@ -18,6 +18,7 @@ import {
   loginSchema,
   validateSchema,
 } from "../validation/schemas";
+import { generateJWT } from "../middleware/auth";
 
 // Proper password hashing with bcrypt
 const hashPassword = async (password: string): Promise<string> => {
@@ -56,14 +57,19 @@ export const register: RequestHandler = async (req, res) => {
       lastName,
     });
 
-    // Create session
-    const token = createSession(user.id);
+    // Create JWT token and session
+    const jwtToken = generateJWT(user.id);
+    const sessionToken = createSession(user.id);
+
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = user;
 
     res.status(201).json({
       success: true,
       message: "User registered successfully",
-      user,
-      token,
+      user: userWithoutPassword,
+      token: jwtToken,
+      sessionToken, // For backwards compatibility
     } as AuthResponse);
   } catch (error) {
     console.error("Registration error:", error);
@@ -104,15 +110,17 @@ export const login: RequestHandler = async (req, res) => {
       } as ErrorResponse);
     }
 
-    // Create session
-    const token = createSession(user.id);
+    // Create JWT token and session
+    const jwtToken = generateJWT(user.id);
+    const sessionToken = createSession(user.id);
     const { password: _, ...userWithoutPassword } = user;
 
     res.json({
       success: true,
       message: "Login successful",
       user: userWithoutPassword,
-      token,
+      token: jwtToken,
+      sessionToken, // For backwards compatibility
     } as AuthResponse);
   } catch (error) {
     console.error("Login error:", error);
