@@ -14,7 +14,7 @@ export interface NotificationData {
 }
 
 export class NotificationService {
-  private io: SocketIOServer;
+  // private io: SocketIOServer; // TODO: Enable when socket.io is installed
   private emailTransporter: nodemailer.Transporter;
 
   constructor(server: HTTPServer) {
