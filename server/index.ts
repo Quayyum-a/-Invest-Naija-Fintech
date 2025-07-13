@@ -144,6 +144,8 @@ import {
   getChallenges,
 } from "./routes/social";
 
+import NotificationService from "./services/notificationService";
+
 export function createServer() {
   // Log configuration on startup
   logConfigStatus();
