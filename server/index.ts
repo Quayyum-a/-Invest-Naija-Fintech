@@ -19,6 +19,26 @@ import {
   errorHandler,
   notFoundHandler,
 } from "./middleware/security";
+import {
+  registerSchema,
+  loginSchema,
+  fundWalletSchema,
+  transferSchema,
+  withdrawSchema,
+  transactionHistorySchema,
+  investmentSchema,
+  airtimeSchema,
+  electricityBillSchema,
+  cableTvSchema,
+  kycSchema,
+  createGroupSchema,
+  moneyRequestSchema,
+  socialPaymentSchema,
+  cryptoTradeSchema,
+  businessAccountSchema,
+  bulkPaymentSchema,
+  validateSchema,
+} from "./validation/schemas";
 
 // Auth routes
 import { register, login, logout, getCurrentUser } from "./routes/auth";
@@ -187,12 +207,10 @@ export function createServer() {
   app.post(
     "/auth/register",
     authRateLimit,
-    validateEmail,
-    validatePassword,
-    validateNigerianPhone,
+    validateSchema(registerSchema),
     register,
   );
-  app.post("/auth/login", authRateLimit, login);
+  app.post("/auth/login", authRateLimit, validateSchema(loginSchema), login);
   app.post("/auth/logout", logout);
   app.get("/auth/me", getCurrentUser);
 
@@ -228,17 +246,37 @@ export function createServer() {
     "/wallet/invest",
     authenticateToken,
     transactionRateLimit,
-    validateTransactionAmount,
+    validateSchema(investmentSchema),
     investMoney,
   );
   app.get("/transactions", authenticateToken, getTransactions);
-  app.get("/transactions/history", authenticateToken, getTransactionHistory);
+  app.get(
+    "/transactions/history",
+    authenticateToken,
+    validateSchema(transactionHistorySchema),
+    getTransactionHistory,
+  );
 
   // Enhanced wallet routes
-  app.post("/wallet/fund", authenticateToken, initiateWalletFunding);
+  app.post(
+    "/wallet/fund",
+    authenticateToken,
+    validateSchema(fundWalletSchema),
+    initiateWalletFunding,
+  );
   app.get("/wallet/verify/:reference", authenticateToken, verifyWalletFunding);
-  app.post("/wallet/transfer", authenticateToken, transferToUser);
-  app.post("/wallet/withdraw", authenticateToken, withdrawToBank);
+  app.post(
+    "/wallet/transfer",
+    authenticateToken,
+    validateSchema(transferSchema),
+    transferToUser,
+  );
+  app.post(
+    "/wallet/withdraw",
+    authenticateToken,
+    validateSchema(withdrawSchema),
+    withdrawToBank,
+  );
 
   // Financial services routes
   app.get("/services", getServices);
@@ -289,7 +327,12 @@ export function createServer() {
   );
 
   // KYC routes (protected)
-  app.post("/kyc/submit", authenticateToken, submitKYCDocuments);
+  app.post(
+    "/kyc/submit",
+    authenticateToken,
+    validateSchema(kycSchema),
+    submitKYCDocuments,
+  );
   app.get("/kyc/status", authenticateToken, getKYCStatus);
   app.post("/kyc/upload", authenticateToken, uploadKYCDocument);
 
@@ -369,10 +412,16 @@ export function createServer() {
     "/crypto/buy",
     authenticateToken,
     transactionRateLimit,
-    validateTransactionAmount,
+    validateSchema(cryptoTradeSchema),
     buyCrypto,
   );
-  app.post("/crypto/sell", authenticateToken, transactionRateLimit, sellCrypto);
+  app.post(
+    "/crypto/sell",
+    authenticateToken,
+    transactionRateLimit,
+    validateSchema(cryptoTradeSchema),
+    sellCrypto,
+  );
 
   // Bill payment routes
   app.get("/bills/billers", getBillers);
@@ -382,14 +431,14 @@ export function createServer() {
     "/bills/pay-electricity",
     authenticateToken,
     transactionRateLimit,
-    validateTransactionAmount,
+    validateSchema(electricityBillSchema),
     payElectricityBill,
   );
   app.post(
     "/bills/buy-airtime",
     authenticateToken,
     transactionRateLimit,
-    validateTransactionAmount,
+    validateSchema(airtimeSchema),
     buyAirtime,
   );
   app.post(
@@ -403,7 +452,7 @@ export function createServer() {
     "/bills/pay-cable-tv",
     authenticateToken,
     transactionRateLimit,
-    validateTransactionAmount,
+    validateSchema(cableTvSchema),
     payCableTVBill,
   );
 
@@ -427,11 +476,26 @@ export function createServer() {
 
   // Social banking routes (protected)
   app.get("/social/groups", authenticateToken, getSocialGroups);
-  app.post("/social/groups", authenticateToken, createGroup);
+  app.post(
+    "/social/groups",
+    authenticateToken,
+    validateSchema(createGroupSchema),
+    createGroup,
+  );
   app.get("/social/requests", authenticateToken, getMoneyRequests);
-  app.post("/social/requests", authenticateToken, requestMoney);
+  app.post(
+    "/social/requests",
+    authenticateToken,
+    validateSchema(moneyRequestSchema),
+    requestMoney,
+  );
   app.get("/social/payments", authenticateToken, getSocialPayments);
-  app.post("/social/payments", authenticateToken, sendMoney);
+  app.post(
+    "/social/payments",
+    authenticateToken,
+    validateSchema(socialPaymentSchema),
+    sendMoney,
+  );
   app.get("/social/challenges", authenticateToken, getChallenges);
 
   // Initialize app on first startup
