@@ -303,22 +303,21 @@ export default function SocialBanking() {
   };
 
   const createGroupSavings = async (data: any) => {
-    try {
-      // TODO: Implement actual API call when endpoint exists
-      console.log("Would create group:", data);
-      const response = {
-        data: {
-          group: {
-            id: Date.now().toString(),
-            ...data,
-            members: [],
-            currentAmount: 0,
-            status: "active",
-            createdBy: "1",
-          },
+        try {
+      const token = localStorage.getItem("investnaija_token");
+      const response = await fetch("/api/social/groups", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-      };
-      setGroupSavings((prev) => [...prev, response.data.group]);
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setGroupSavings((prev) => [...prev, result.group]);
       setShowCreateGroup(false);
       toast({
         title: "Success",
