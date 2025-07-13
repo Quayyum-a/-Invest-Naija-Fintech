@@ -18,6 +18,14 @@ import {
 } from "../data/storage";
 import { walletService } from "../services/walletService";
 import { paymentsService } from "../services/paymentsService";
+import {
+  fundWalletSchema,
+  transferSchema,
+  withdrawSchema,
+  transactionHistorySchema,
+  investmentSchema,
+  validateSchema,
+} from "../validation/schemas";
 
 export const getWallet: RequestHandler = (req, res) => {
   try {
@@ -450,20 +458,6 @@ export const initiateWalletFunding: RequestHandler = async (req, res) => {
 
     const { amount, provider = "paystack" } = req.body;
 
-    if (!amount || amount <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid amount",
-      });
-    }
-
-    if (amount < 100) {
-      return res.status(400).json({
-        success: false,
-        error: "Minimum funding amount is ₦100",
-      });
-    }
-
     const result = await paymentsService.initializePaystackPayment(
       userId,
       amount,
@@ -537,13 +531,6 @@ export const transferToUser: RequestHandler = async (req, res) => {
 
     const { toUserIdentifier, amount, description } = req.body;
 
-    if (!toUserIdentifier || !amount) {
-      return res.status(400).json({
-        success: false,
-        error: "Recipient and amount are required",
-      });
-    }
-
     // Validate transfer
     const validation = await walletService.validateTransfer(
       fromUserId,
@@ -601,13 +588,6 @@ export const withdrawToBank: RequestHandler = async (req, res) => {
     }
 
     const { amount, bankDetails } = req.body;
-
-    if (!amount || !bankDetails) {
-      return res.status(400).json({
-        success: false,
-        error: "Amount and bank details are required",
-      });
-    }
 
     const result = await walletService.withdrawToBank(
       userId,
