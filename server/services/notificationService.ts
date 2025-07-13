@@ -136,10 +136,12 @@ export class NotificationService {
       const user = await this.getUserById(notification.userId);
       if (!user?.phone) return;
 
-      await sendSMS(
-        user.phone,
-        `${notification.title}: ${notification.message}`,
-      );
+      // TODO: Export sendSMS from otp module and uncomment
+      // await sendSMS(
+      //   user.phone,
+      //   `${notification.title}: ${notification.message}`,
+      // );
+      console.log(`Would send SMS to ${user.phone}: ${notification.title}`);
     } catch (error) {
       console.error("SMS notification failed:", error);
     }
