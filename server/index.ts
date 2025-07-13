@@ -9,6 +9,7 @@ import {
   authRateLimit,
   otpRateLimit,
   transactionRateLimit,
+  strictRateLimit,
   securityHeaders,
   requestLogger,
   validateInput,
@@ -18,6 +19,10 @@ import {
   validatePassword,
   errorHandler,
   notFoundHandler,
+  fraudDetection,
+  geoValidation,
+  deviceFingerprinting,
+  securityLogger,
 } from "./middleware/security";
 import {
   registerSchema,
@@ -179,7 +184,10 @@ export function createServer() {
 
   // Security middleware (apply early)
   app.use(securityHeaders);
-  app.use(requestLogger);
+  app.use(deviceFingerprinting);
+  app.use(geoValidation);
+  app.use(fraudDetection);
+  app.use(securityLogger);
   app.use(generalRateLimit);
 
   // Basic middleware
@@ -326,15 +334,21 @@ export function createServer() {
     getInvestmentPerformance,
   );
 
-  // KYC routes (protected)
+  // KYC routes (protected with strict rate limiting)
   app.post(
     "/kyc/submit",
     authenticateToken,
+    strictRateLimit,
     validateSchema(kycSchema),
     submitKYCDocuments,
   );
   app.get("/kyc/status", authenticateToken, getKYCStatus);
-  app.post("/kyc/upload", authenticateToken, uploadKYCDocument);
+  app.post(
+    "/kyc/upload",
+    authenticateToken,
+    strictRateLimit,
+    uploadKYCDocument,
+  );
 
   // Payment routes
   app.get("/payments/banks", getBanks);
@@ -467,12 +481,27 @@ export function createServer() {
     initiateTransfer,
   );
 
-  // Admin routes (protected)
-  app.get("/admin/stats", authenticateToken, getAdminStats);
-  app.get("/admin/users", authenticateToken, getAllUsersAdmin);
-  app.get("/admin/users/:userId", authenticateToken, getUserDetails);
-  app.put("/admin/users/:userId/kyc", authenticateToken, updateUserKYC);
-  app.put("/admin/users/:userId/status", authenticateToken, updateUserStatus);
+  // Admin routes (protected with strict rate limiting)
+  app.get("/admin/stats", authenticateToken, strictRateLimit, getAdminStats);
+  app.get("/admin/users", authenticateToken, strictRateLimit, getAllUsersAdmin);
+  app.get(
+    "/admin/users/:userId",
+    authenticateToken,
+    strictRateLimit,
+    getUserDetails,
+  );
+  app.put(
+    "/admin/users/:userId/kyc",
+    authenticateToken,
+    strictRateLimit,
+    updateUserKYC,
+  );
+  app.put(
+    "/admin/users/:userId/status",
+    authenticateToken,
+    strictRateLimit,
+    updateUserStatus,
+  );
 
   // Social banking routes (protected)
   app.get("/social/groups", authenticateToken, getSocialGroups);
