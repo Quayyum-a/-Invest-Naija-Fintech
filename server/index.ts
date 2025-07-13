@@ -133,6 +133,17 @@ import {
   verifyTransferAccount,
 } from "./routes/billPayments";
 
+// Social routes
+import {
+  getSocialGroups,
+  createGroup,
+  getMoneyRequests,
+  requestMoney,
+  getSocialPayments,
+  sendMoney,
+  getChallenges,
+} from "./routes/social";
+
 export function createServer() {
   // Log configuration on startup
   logConfigStatus();
