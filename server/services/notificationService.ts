@@ -1,7 +1,7 @@
 // import { Server as SocketIOServer } from 'socket.io'; // TODO: Install socket.io when needed
 import { Server as HTTPServer } from "http";
 import nodemailer from "nodemailer";
-import { sendSMS } from "../routes/otp";
+// import { sendSMS } from '../routes/otp'; // TODO: Export sendSMS from otp module
 
 export interface NotificationData {
   userId: string;
