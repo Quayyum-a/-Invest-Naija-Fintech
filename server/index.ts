@@ -32,6 +32,11 @@ import {
   getTransactions,
   getDashboardData,
   getPortfolioData,
+  initiateWalletFunding,
+  verifyWalletFunding,
+  transferToUser,
+  withdrawToBank,
+  getTransactionHistory,
 } from "./routes/wallet";
 
 // Services routes
