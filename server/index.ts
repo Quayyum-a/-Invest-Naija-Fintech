@@ -554,7 +554,6 @@ export function createServer() {
   app.post("/dev/database/query", executeQuery);
 
   // Debug routes (development only)
-  import { debugTransactions, debugPing } from "./routes/debug";
   app.get("/api/debug/ping", debugPing);
   app.get("/api/debug/transactions", authenticateToken, debugTransactions);
 
