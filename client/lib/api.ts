@@ -24,10 +24,38 @@ class ApiService {
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error || `HTTP error! status: ${response.status}`);
+      let errorMessage = `HTTP error! status: ${response.status}`;
+
+      try {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } else {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+      } catch (parseError) {
+        console.warn("Failed to parse error response:", parseError);
+      }
+
+      throw new Error(errorMessage);
     }
-    return response.json();
+
+    try {
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error(
+          "Expected JSON response but received: " +
+            (contentType || "unknown content type"),
+        );
+      }
+
+      return await response.json();
+    } catch (jsonError) {
+      console.error("Failed to parse JSON response:", jsonError);
+      throw new Error("Invalid JSON response from server");
+    }
   }
 
   // Wallet operations
