@@ -8,11 +8,23 @@ class BillPaymentService {
   private baseUrlFlutterwave = "https://api.flutterwave.com/v3";
 
   constructor() {
-    this.paystackApiKey =
-      process.env.PAYSTACK_SECRET_KEY ||
-      "sk_test_52dc872013582129d489989e914c772186924031";
-    this.flutterwaveApiKey =
-      process.env.FLUTTERWAVE_SECRET_KEY || "FLWSECK_TEST-default";
+    this.paystackApiKey = process.env.PAYSTACK_SECRET_KEY;
+    this.flutterwaveApiKey = process.env.FLUTTERWAVE_SECRET_KEY;
+
+    if (!this.paystackApiKey && !this.flutterwaveApiKey) {
+      console.warn(
+        "No payment provider API keys configured. Some features may not work.",
+      );
+    }
+
+    if (process.env.NODE_ENV === "production") {
+      if (
+        this.paystackApiKey?.includes("test") ||
+        this.flutterwaveApiKey?.includes("TEST")
+      ) {
+        throw new Error("Test API keys cannot be used in production");
+      }
+    }
   }
 
   // Get available billers (Electricity, Cable TV, Internet, etc.)
