@@ -205,6 +205,21 @@ export const integrations = {
     webhookSecret: env.PAYSTACK_WEBHOOK_SECRET,
     enabled: !!(env.PAYSTACK_PUBLIC_KEY && env.PAYSTACK_SECRET_KEY),
   },
+  flutterwave: {
+    publicKey: env.FLUTTERWAVE_PUBLIC_KEY,
+    secretKey: env.FLUTTERWAVE_SECRET_KEY,
+    webhookSecret: env.FLUTTERWAVE_WEBHOOK_SECRET,
+    enabled: !!(env.FLUTTERWAVE_PUBLIC_KEY && env.FLUTTERWAVE_SECRET_KEY),
+  },
+  coinGecko: {
+    apiKey: env.COINGECKO_API_KEY,
+    enabled: true, // CoinGecko is free and doesn't require API key
+  },
+  youVerify: {
+    apiKey: env.YOUVERIFY_API_KEY,
+    baseUrl: env.YOUVERIFY_BASE_URL,
+    enabled: !!env.YOUVERIFY_API_KEY,
+  },
   verifyMe: {
     apiKey: env.VERIFYME_API_KEY,
     baseUrl: env.VERIFYME_BASE_URL,
