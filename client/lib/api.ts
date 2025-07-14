@@ -135,10 +135,42 @@ class ApiService {
   }
 
   async getTransactions(): Promise<any> {
-    const response = await fetch("/api/transactions", {
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
+    try {
+      const response = await fetch("/api/transactions", {
+        headers: this.getAuthHeaders(),
+      });
+
+      console.log("Transactions response status:", response.status);
+      console.log(
+        "Transactions response headers:",
+        Object.fromEntries(response.headers.entries()),
+      );
+
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error);
+
+      // Try the debug endpoint as fallback
+      try {
+        console.log("Trying debug endpoint...");
+        const debugResponse = await fetch("/api/debug/transactions", {
+          headers: this.getAuthHeaders(),
+        });
+
+        if (debugResponse.ok) {
+          const debugData = await debugResponse.json();
+          console.log("Debug response:", debugData);
+          return {
+            success: true,
+            transactions: debugData.data?.transactions || [],
+          };
+        }
+      } catch (debugError) {
+        console.error("Debug endpoint also failed:", debugError);
+      }
+
+      throw error;
+    }
   }
 
   // Investment operations
