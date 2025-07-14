@@ -558,8 +558,8 @@ export function createServer() {
   app.post("/dev/database/query", executeQuery);
 
   // Debug routes (development only)
-  app.get("/api/debug/ping", debugPing);
-  app.get("/api/debug/transactions", authenticateToken, debugTransactions);
+  app.get("/debug/ping", debugPing);
+  app.get("/debug/transactions", authenticateToken, debugTransactions);
 
   // Initialize app on first startup
   try {
