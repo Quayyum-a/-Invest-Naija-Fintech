@@ -6,9 +6,17 @@ class PaystackService {
   private baseUrl = "https://api.paystack.co";
 
   constructor() {
-    this.apiKey =
-      process.env.PAYSTACK_SECRET_KEY ||
-      "sk_test_52dc872013582129d489989e914c772186924031";
+    this.apiKey = process.env.PAYSTACK_SECRET_KEY;
+
+    if (!this.apiKey) {
+      console.error("PAYSTACK_SECRET_KEY environment variable is required");
+      throw new Error("Payment service configuration error");
+    }
+
+    if (this.apiKey.includes("test") && process.env.NODE_ENV === "production") {
+      console.error("Test API keys cannot be used in production");
+      throw new Error("Invalid API key for production environment");
+    }
   }
 
   // Initialize payment transaction
@@ -20,20 +28,9 @@ class PaystackService {
     callback_url?: string;
   }) {
     try {
-      // Check if we have a valid API key
-      if (!this.apiKey || this.apiKey.includes("demo")) {
-        console.warn(
-          "Using demo/invalid Paystack key - returning mock response",
-        );
-        return {
-          status: true,
-          message: "Authorization URL created",
-          data: {
-            authorization_url: `${data.callback_url}?reference=${data.reference}&status=success&demo=true`,
-            access_code: "demo_access_code",
-            reference: data.reference || `demo_${Date.now()}`,
-          },
-        };
+      // Validate API key is properly configured
+      if (!this.apiKey) {
+        throw new Error("Payment service not properly configured");
       }
 
       const response = await axios.post(
