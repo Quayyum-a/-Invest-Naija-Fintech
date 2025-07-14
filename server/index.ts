@@ -25,6 +25,15 @@ import {
   securityLogger,
 } from "./middleware/security";
 import {
+  requestMetrics,
+  healthCheck,
+  getMetrics,
+  resetMetrics,
+  readinessCheck,
+  livenessCheck,
+  startMonitoring,
+} from "./middleware/monitoring";
+import {
   registerSchema,
   loginSchema,
   fundWalletSchema,
@@ -188,6 +197,7 @@ export function createServer() {
   app.use(geoValidation);
   app.use(fraudDetection);
   app.use(securityLogger);
+  app.use(requestMetrics); // Add performance monitoring
   app.use(generalRateLimit);
 
   // Basic middleware
@@ -204,10 +214,15 @@ export function createServer() {
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
   app.use(validateInput);
 
-  // Health check
+  // Health and monitoring endpoints
   app.get("/ping", (_req, res) => {
     res.json({ message: "InvestNaija API v1.0" });
   });
+  app.get("/health", healthCheck);
+  app.get("/ready", readinessCheck);
+  app.get("/live", livenessCheck);
+  app.get("/metrics", getMetrics);
+  app.post("/metrics/reset", resetMetrics);
 
   // Production API only - demo route removed
 
@@ -533,6 +548,9 @@ export function createServer() {
   } catch (error) {
     console.log("App already initialized or initialization skipped");
   }
+
+  // Start monitoring services
+  startMonitoring();
 
   // Error handling middleware (must be last)
   app.use(notFoundHandler);
