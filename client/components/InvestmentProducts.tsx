@@ -342,14 +342,37 @@ export default function InvestmentProducts() {
         ).length,
       };
 
-      setProducts(mockProducts);
-      setUserInvestments(mockUserInvestments);
-      setPortfolioSummary(mockPortfolioSummary);
+            // Create basic sample data for fallback
+      setProducts([
+        {
+          id: "sample_treasury",
+          name: "Treasury Bills",
+          category: "treasury_bills",
+          description: "Government-backed short-term securities",
+          minimumAmount: 1000,
+          currentYield: 15.0,
+          duration: 91,
+          riskLevel: "low",
+          provider: "Central Bank of Nigeria",
+          totalInvested: 0,
+          availableUnits: 1000,
+          status: "active",
+          features: ["Government guaranteed", "Low risk", "Flexible duration"],
+        },
+      ]);
+      setUserInvestments([]);
+      setPortfolioSummary({
+        totalInvested: 0,
+        currentValue: 0,
+        totalReturns: 0,
+        returnPercentage: 0,
+        activeInvestments: 0,
+      });
     } catch (error) {
       console.error("Failed to load investment data:", error);
       toast({
         title: "Error",
-        description: "Failed to load investment products",
+        description: "Unable to load investment data. Please refresh the page.",
         variant: "destructive",
       });
     } finally {
