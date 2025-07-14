@@ -491,12 +491,7 @@ export default function Dashboard() {
           onPayBills={() => setIsBillsOpen(true)}
           onTransfer={() => setIsTransferOpen(true)}
           onCrypto={() => (window.location.href = "/crypto")}
-          onMore={() =>
-            toast({
-              title: "More Services",
-              description: "Additional services coming soon!",
-            })
-          }
+          onMore={() => (window.location.href = "/services")}
         />
 
         {/* New Features */}
