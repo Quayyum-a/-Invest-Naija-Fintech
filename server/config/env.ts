@@ -95,6 +95,13 @@ const loadEnv = (): Env => {
       PAYSTACK_PUBLIC_KEY: process.env.PAYSTACK_PUBLIC_KEY,
       PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
       PAYSTACK_WEBHOOK_SECRET: process.env.PAYSTACK_WEBHOOK_SECRET,
+      FLUTTERWAVE_PUBLIC_KEY: process.env.FLUTTERWAVE_PUBLIC_KEY,
+      FLUTTERWAVE_SECRET_KEY: process.env.FLUTTERWAVE_SECRET_KEY,
+      FLUTTERWAVE_WEBHOOK_SECRET: process.env.FLUTTERWAVE_WEBHOOK_SECRET,
+      COINGECKO_API_KEY: process.env.COINGECKO_API_KEY,
+      YOUVERIFY_API_KEY: process.env.YOUVERIFY_API_KEY,
+      YOUVERIFY_BASE_URL:
+        process.env.YOUVERIFY_BASE_URL || "https://api.youverify.co/v2",
       VERIFYME_API_KEY: process.env.VERIFYME_API_KEY,
       VERIFYME_BASE_URL:
         process.env.VERIFYME_BASE_URL || "https://api.verifyme.ng",
