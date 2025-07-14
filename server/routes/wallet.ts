@@ -26,6 +26,11 @@ import {
   investmentSchema,
   validateSchema,
 } from "../validation/schemas";
+import {
+  validateRecipient,
+  getUserDisplayName,
+  canReceiveMoney,
+} from "../data/userLookup";
 
 export const getWallet: RequestHandler = (req, res) => {
   try {
@@ -531,23 +536,36 @@ export const transferToUser: RequestHandler = async (req, res) => {
 
     const { toUserIdentifier, amount, description } = req.body;
 
-    // Validate transfer
-    const validation = await walletService.validateTransfer(
-      fromUserId,
-      toUserIdentifier,
-      amount,
-    );
+    // Validate and find recipient
+    const recipientValidation = validateRecipient(toUserIdentifier);
 
-    if (!validation.success) {
+    if (!recipientValidation.valid) {
       return res.status(400).json({
         success: false,
-        error: validation.error,
+        error: recipientValidation.error,
       });
     }
 
-    // For demo purposes, use a mock user ID
-    // In production, implement user lookup by phone/email
-    const toUserId = "demo-recipient-id";
+    const recipient = recipientValidation.user!;
+
+    // Check if recipient can receive this amount
+    const canReceive = canReceiveMoney(recipient, amount);
+    if (!canReceive.canReceive) {
+      return res.status(400).json({
+        success: false,
+        error: canReceive.reason,
+      });
+    }
+
+    // Prevent self-transfers
+    if (recipient.id === fromUserId) {
+      return res.status(400).json({
+        success: false,
+        error: "You cannot transfer money to yourself",
+      });
+    }
+
+    const toUserId = recipient.id;
 
     const result = await walletService.transferFunds(
       fromUserId,
