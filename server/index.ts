@@ -207,6 +207,9 @@ export function createServer() {
   app.use(requestMetrics); // Add performance monitoring
   app.use(generalRateLimit);
 
+  // JSON response middleware for API routes
+  app.use(ensureJsonResponse);
+
   // Basic middleware
   app.use(
     cors({
