@@ -183,6 +183,9 @@ import {
   getChallenges,
 } from "./routes/social";
 
+// Database viewer routes (development only)
+import { viewDatabase, getTableData, executeQuery } from "./routes/database";
+
 import NotificationService from "./services/notificationService";
 
 export function createServer() {
@@ -541,6 +544,11 @@ export function createServer() {
     sendMoney,
   );
   app.get("/social/challenges", authenticateToken, getChallenges);
+
+  // Database viewer routes (development only)
+  app.get("/dev/database", viewDatabase);
+  app.get("/dev/database/:tableName", getTableData);
+  app.post("/dev/database/query", executeQuery);
 
   // Initialize app on first startup
   try {
