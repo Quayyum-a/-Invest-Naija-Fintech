@@ -18,6 +18,9 @@
     "build:server": "vite build --config vite.config.server.ts",
     "start": "node dist/server/node-build.mjs",
     "test": "vitest --run",
+    "test:jest": "cd server && npm run test",
+    "test:watch": "cd server && npm run test:watch",
+    "test:coverage": "cd server && npm run test:coverage",
     "format.fix": "prettier --write .",
     "typecheck": "tsc"
   },
