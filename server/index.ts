@@ -550,6 +550,11 @@ export function createServer() {
   app.get("/dev/database/:tableName", getTableData);
   app.post("/dev/database/query", executeQuery);
 
+  // Debug routes (development only)
+  import { debugTransactions, debugPing } from "./routes/debug";
+  app.get("/api/debug/ping", debugPing);
+  app.get("/api/debug/transactions", authenticateToken, debugTransactions);
+
   // Initialize app on first startup
   try {
     initializeApp();
