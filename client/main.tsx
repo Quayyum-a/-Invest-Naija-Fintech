@@ -28,6 +28,7 @@ const BusinessBanking = lazy(() => import("./pages/BusinessBanking"));
 const SocialPage = lazy(() => import("./pages/SocialPage"));
 const Investments = lazy(() => import("./pages/Investments"));
 const SuperAdmin = lazy(() => import("./pages/SuperAdmin"));
+const DatabaseViewer = lazy(() => import("./components/DatabaseViewer"));
 
 const queryClient = new QueryClient();
 
