@@ -156,6 +156,14 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/database"
+                element={
+                  <SuspenseWrapper>
+                    <DatabaseViewer />
+                  </SuspenseWrapper>
+                }
+              />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
