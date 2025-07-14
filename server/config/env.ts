@@ -262,6 +262,15 @@ export const logConfigStatus = () => {
     `   Paystack: ${integrations.paystack.enabled ? "✅ Enabled" : "❌ Disabled"}`,
   );
   console.log(
+    `   Flutterwave: ${integrations.flutterwave.enabled ? "✅ Enabled" : "❌ Disabled"}`,
+  );
+  console.log(
+    `   CoinGecko: ${integrations.coinGecko.enabled ? "✅ Enabled" : "❌ Disabled"}`,
+  );
+  console.log(
+    `   KYC (YouVerify): ${integrations.youVerify.enabled ? "✅ Enabled" : "❌ Disabled"}`,
+  );
+  console.log(
     `   KYC (VerifyMe): ${integrations.verifyMe.enabled ? "✅ Enabled" : "❌ Disabled"}`,
   );
   console.log(
