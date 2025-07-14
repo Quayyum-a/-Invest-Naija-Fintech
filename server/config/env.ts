@@ -26,7 +26,19 @@ const envSchema = z.object({
   PAYSTACK_SECRET_KEY: z.string().startsWith("sk_").optional(),
   PAYSTACK_WEBHOOK_SECRET: z.string().optional(),
 
-  // KYC Verification (VerifyMe)
+  // Flutterwave Integration
+  FLUTTERWAVE_PUBLIC_KEY: z.string().startsWith("FLWPUBK_").optional(),
+  FLUTTERWAVE_SECRET_KEY: z.string().startsWith("FLWSECK_").optional(),
+  FLUTTERWAVE_WEBHOOK_SECRET: z.string().optional(),
+
+  // CoinGecko API (free, no key required)
+  COINGECKO_API_KEY: z.string().optional(),
+
+  // YouVerify KYC Integration
+  YOUVERIFY_API_KEY: z.string().optional(),
+  YOUVERIFY_BASE_URL: z.string().url().optional(),
+
+  // KYC Verification (VerifyMe - Legacy)
   VERIFYME_API_KEY: z.string().optional(),
   VERIFYME_BASE_URL: z.string().url().optional(),
 
