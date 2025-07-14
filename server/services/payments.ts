@@ -8,12 +8,18 @@ class PaystackService {
   constructor() {
     this.apiKey = process.env.PAYSTACK_SECRET_KEY;
 
-    if (!this.apiKey) {
-      console.error("PAYSTACK_SECRET_KEY environment variable is required");
-      throw new Error("Payment service configuration error");
+    // Allow missing API key during build process
+    if (!this.apiKey && process.env.NODE_ENV !== "development") {
+      console.warn(
+        "PAYSTACK_SECRET_KEY environment variable not set. Payment features will be disabled.",
+      );
     }
 
-    if (this.apiKey.includes("test") && process.env.NODE_ENV === "production") {
+    if (
+      this.apiKey &&
+      this.apiKey.includes("test") &&
+      process.env.NODE_ENV === "production"
+    ) {
       console.error("Test API keys cannot be used in production");
       throw new Error("Invalid API key for production environment");
     }
@@ -30,7 +36,9 @@ class PaystackService {
     try {
       // Validate API key is properly configured
       if (!this.apiKey) {
-        throw new Error("Payment service not properly configured");
+        throw new Error(
+          "Payment service not configured. Please add PAYSTACK_SECRET_KEY environment variable.",
+        );
       }
 
       const response = await axios.post(
