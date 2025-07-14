@@ -33,6 +33,7 @@ import {
   livenessCheck,
   startMonitoring,
 } from "./middleware/monitoring";
+import { ensureJsonResponse, apiErrorHandler } from "./middleware/jsonResponse";
 import {
   registerSchema,
   loginSchema,
@@ -186,6 +187,9 @@ import {
 // Database viewer routes (development only)
 import { viewDatabase, getTableData, executeQuery } from "./routes/database";
 
+// Debug routes (development only)
+import { debugTransactions, debugPing } from "./routes/debug";
+
 import NotificationService from "./services/notificationService";
 
 export function createServer() {
@@ -202,6 +206,9 @@ export function createServer() {
   app.use(securityLogger);
   app.use(requestMetrics); // Add performance monitoring
   app.use(generalRateLimit);
+
+  // JSON response middleware for API routes
+  app.use(ensureJsonResponse);
 
   // Basic middleware
   app.use(
@@ -550,6 +557,10 @@ export function createServer() {
   app.get("/dev/database/:tableName", getTableData);
   app.post("/dev/database/query", executeQuery);
 
+  // Debug routes (development only)
+  app.get("/debug/ping", debugPing);
+  app.get("/debug/transactions", authenticateToken, debugTransactions);
+
   // Initialize app on first startup
   try {
     initializeApp();
@@ -561,6 +572,7 @@ export function createServer() {
   startMonitoring();
 
   // Error handling middleware (must be last)
+  app.use(apiErrorHandler); // API-specific error handler
   app.use(notFoundHandler);
   app.use(errorHandler);
 

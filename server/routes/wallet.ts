@@ -16,8 +16,8 @@ import {
   createInvestment,
   updateTransaction,
 } from "../data/storage";
-import { walletService } from "../services/walletService";
-import { paymentsService } from "../services/paymentsService";
+import { paymentService } from "../services/payments";
+import { termiiService } from "../services/termiiService";
 import {
   fundWalletSchema,
   transferSchema,
@@ -282,6 +282,9 @@ export const investMoney: RequestHandler = (req, res) => {
 
 export const getTransactions: RequestHandler = (req, res) => {
   try {
+    // Ensure we always return JSON
+    res.setHeader("Content-Type", "application/json");
+
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({
@@ -293,17 +296,27 @@ export const getTransactions: RequestHandler = (req, res) => {
     const limit = req.query.limit
       ? parseInt(req.query.limit as string)
       : undefined;
+
     const transactions = getUserTransactions(userId, limit);
 
-    res.json({
+    // Ensure transactions is always an array
+    const safeTransactions = Array.isArray(transactions) ? transactions : [];
+
+    res.status(200).json({
       success: true,
-      transactions,
+      data: {
+        transactions: safeTransactions,
+        count: safeTransactions.length,
+      },
     });
   } catch (error) {
     console.error("Get transactions error:", error);
+    res.setHeader("Content-Type", "application/json");
     res.status(500).json({
       success: false,
       error: "Internal server error",
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
     } as ErrorResponse);
   }
 };

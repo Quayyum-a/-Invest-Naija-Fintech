@@ -18,6 +18,11 @@ export const authenticateToken = (
   res: Response,
   next: NextFunction,
 ) => {
+  // Ensure we always return JSON for API routes
+  if (req.path.startsWith("/api/")) {
+    res.setHeader("Content-Type", "application/json");
+  }
+
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 

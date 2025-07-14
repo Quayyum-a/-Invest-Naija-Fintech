@@ -26,7 +26,19 @@ const envSchema = z.object({
   PAYSTACK_SECRET_KEY: z.string().startsWith("sk_").optional(),
   PAYSTACK_WEBHOOK_SECRET: z.string().optional(),
 
-  // KYC Verification (VerifyMe)
+  // Flutterwave Integration
+  FLUTTERWAVE_PUBLIC_KEY: z.string().startsWith("FLWPUBK_").optional(),
+  FLUTTERWAVE_SECRET_KEY: z.string().startsWith("FLWSECK_").optional(),
+  FLUTTERWAVE_WEBHOOK_SECRET: z.string().optional(),
+
+  // CoinGecko API (free, no key required)
+  COINGECKO_API_KEY: z.string().optional(),
+
+  // YouVerify KYC Integration
+  YOUVERIFY_API_KEY: z.string().optional(),
+  YOUVERIFY_BASE_URL: z.string().url().optional(),
+
+  // KYC Verification (VerifyMe - Legacy)
   VERIFYME_API_KEY: z.string().optional(),
   VERIFYME_BASE_URL: z.string().url().optional(),
 
@@ -83,6 +95,13 @@ const loadEnv = (): Env => {
       PAYSTACK_PUBLIC_KEY: process.env.PAYSTACK_PUBLIC_KEY,
       PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
       PAYSTACK_WEBHOOK_SECRET: process.env.PAYSTACK_WEBHOOK_SECRET,
+      FLUTTERWAVE_PUBLIC_KEY: process.env.FLUTTERWAVE_PUBLIC_KEY,
+      FLUTTERWAVE_SECRET_KEY: process.env.FLUTTERWAVE_SECRET_KEY,
+      FLUTTERWAVE_WEBHOOK_SECRET: process.env.FLUTTERWAVE_WEBHOOK_SECRET,
+      COINGECKO_API_KEY: process.env.COINGECKO_API_KEY,
+      YOUVERIFY_API_KEY: process.env.YOUVERIFY_API_KEY,
+      YOUVERIFY_BASE_URL:
+        process.env.YOUVERIFY_BASE_URL || "https://api.youverify.co/v2",
       VERIFYME_API_KEY: process.env.VERIFYME_API_KEY,
       VERIFYME_BASE_URL:
         process.env.VERIFYME_BASE_URL || "https://api.verifyme.ng",
@@ -186,6 +205,21 @@ export const integrations = {
     webhookSecret: env.PAYSTACK_WEBHOOK_SECRET,
     enabled: !!(env.PAYSTACK_PUBLIC_KEY && env.PAYSTACK_SECRET_KEY),
   },
+  flutterwave: {
+    publicKey: env.FLUTTERWAVE_PUBLIC_KEY,
+    secretKey: env.FLUTTERWAVE_SECRET_KEY,
+    webhookSecret: env.FLUTTERWAVE_WEBHOOK_SECRET,
+    enabled: !!(env.FLUTTERWAVE_PUBLIC_KEY && env.FLUTTERWAVE_SECRET_KEY),
+  },
+  coinGecko: {
+    apiKey: env.COINGECKO_API_KEY,
+    enabled: true, // CoinGecko is free and doesn't require API key
+  },
+  youVerify: {
+    apiKey: env.YOUVERIFY_API_KEY,
+    baseUrl: env.YOUVERIFY_BASE_URL,
+    enabled: !!env.YOUVERIFY_API_KEY,
+  },
   verifyMe: {
     apiKey: env.VERIFYME_API_KEY,
     baseUrl: env.VERIFYME_BASE_URL,
@@ -226,6 +260,15 @@ export const logConfigStatus = () => {
   console.log(`   Database: ✅ SQLite connected (data/investnaija.db)`);
   console.log(
     `   Paystack: ${integrations.paystack.enabled ? "✅ Enabled" : "❌ Disabled"}`,
+  );
+  console.log(
+    `   Flutterwave: ${integrations.flutterwave.enabled ? "✅ Enabled" : "❌ Disabled"}`,
+  );
+  console.log(
+    `   CoinGecko: ${integrations.coinGecko.enabled ? "✅ Enabled" : "❌ Disabled"}`,
+  );
+  console.log(
+    `   KYC (YouVerify): ${integrations.youVerify.enabled ? "✅ Enabled" : "❌ Disabled"}`,
   );
   console.log(
     `   KYC (VerifyMe): ${integrations.verifyMe.enabled ? "✅ Enabled" : "❌ Disabled"}`,

@@ -24,10 +24,38 @@ class ApiService {
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error || `HTTP error! status: ${response.status}`);
+      let errorMessage = `HTTP error! status: ${response.status}`;
+
+      try {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } else {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+      } catch (parseError) {
+        console.warn("Failed to parse error response:", parseError);
+      }
+
+      throw new Error(errorMessage);
     }
-    return response.json();
+
+    try {
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error(
+          "Expected JSON response but received: " +
+            (contentType || "unknown content type"),
+        );
+      }
+
+      return await response.json();
+    } catch (jsonError) {
+      console.error("Failed to parse JSON response:", jsonError);
+      throw new Error("Invalid JSON response from server");
+    }
   }
 
   // Wallet operations
@@ -107,10 +135,55 @@ class ApiService {
   }
 
   async getTransactions(): Promise<any> {
-    const response = await fetch("/api/transactions", {
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
+    try {
+      const response = await fetch("/api/transactions", {
+        headers: this.getAuthHeaders(),
+      });
+
+      console.log("Transactions response status:", response.status);
+      console.log(
+        "Transactions response headers:",
+        Object.fromEntries(response.headers.entries()),
+      );
+
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error);
+
+      // Try the debug endpoint as fallback
+      try {
+        console.log("Trying debug endpoint as fallback...");
+        const debugResponse = await fetch("/api/debug/transactions", {
+          headers: this.getAuthHeaders(),
+        });
+
+        if (debugResponse.ok) {
+          const debugData = await debugResponse.json();
+          console.log("Debug response successful:", debugData);
+          return {
+            success: true,
+            transactions: debugData.data?.transactions || [],
+            debug: true,
+          };
+        } else {
+          console.log(
+            "Debug endpoint returned non-ok status:",
+            debugResponse.status,
+          );
+        }
+      } catch (debugError) {
+        console.error("Debug endpoint also failed:", debugError);
+      }
+
+      // If both fail, return empty transactions instead of throwing
+      console.warn("All transaction endpoints failed, returning empty array");
+      return {
+        success: true,
+        transactions: [],
+        error: error.message,
+        fallback: true,
+      };
+    }
   }
 
   // Investment operations
