@@ -33,6 +33,7 @@ import {
   livenessCheck,
   startMonitoring,
 } from "./middleware/monitoring";
+import { ensureJsonResponse, apiErrorHandler } from "./middleware/jsonResponse";
 import {
   registerSchema,
   loginSchema,
