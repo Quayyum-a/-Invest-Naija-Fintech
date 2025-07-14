@@ -16,8 +16,8 @@ import {
   createInvestment,
   updateTransaction,
 } from "../data/storage";
-import { walletService } from "../services/walletService";
-import { paymentsService } from "../services/paymentsService";
+import { paymentService } from "../services/payments";
+import { termiiService } from "../services/termiiService";
 import {
   fundWalletSchema,
   transferSchema,
