@@ -93,42 +93,21 @@ export default function BulkPayments() {
   const loadBulkPayments = async () => {
     setLoading(true);
     try {
-      // Mock data
-      const mockPayments: BulkPayment[] = [
-        {
-          id: "1",
-          name: "January 2024 Salary",
-          totalAmount: 45000000,
-          recipientCount: 45,
-          status: "completed",
-          createdAt: "2024-01-31",
-          processedAt: "2024-01-31",
-          description: "Monthly salary payment for all employees",
-          type: "salary",
+      // Fetch real bulk payments from API
+      const response = await fetch("/api/bulk-payments", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        {
-          id: "2",
-          name: "Q4 Vendor Payments",
-          totalAmount: 15750000,
-          recipientCount: 12,
-          status: "processing",
-          createdAt: "2024-01-15",
-          description: "Quarterly payments to vendors and suppliers",
-          type: "vendor",
-        },
-        {
-          id: "3",
-          name: "Year-end Bonuses",
-          totalAmount: 8500000,
-          recipientCount: 38,
-          status: "draft",
-          createdAt: "2024-01-10",
-          description: "Performance bonuses for 2023",
-          type: "bonus",
-        },
-      ];
+      });
 
-      setBulkPayments(mockPayments);
+      const result = await response.json();
+
+      if (result.success) {
+        setBulkPayments(result.data || []);
+      } else {
+        // Fallback to empty array if no data
+        setBulkPayments([]);
+      }
     } catch (error) {
       console.error("Failed to load bulk payments:", error);
       toast({
