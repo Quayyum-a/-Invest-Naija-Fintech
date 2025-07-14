@@ -320,36 +320,97 @@ export const sendMoney: RequestHandler = async (req, res) => {
 
     const amountNum = parseFloat(amount);
 
-    // Check user wallet balance
-    const wallet = getUserWallet(user.id);
-    if (!wallet || wallet.balance < amountNum) {
+    // Validate and find recipient
+    const recipientValidation = validateRecipient(to);
+
+    if (!recipientValidation.valid) {
       return res.status(400).json({
         success: false,
-        error: "Insufficient balance",
+        error: recipientValidation.error,
       });
     }
 
-    // Deduct from sender
+    const recipient = recipientValidation.user!;
+
+    // Check if recipient can receive this amount
+    const canReceive = canReceiveMoney(recipient, amountNum);
+    if (!canReceive.canReceive) {
+      return res.status(400).json({
+        success: false,
+        error: canReceive.reason,
+      });
+    }
+
+    // Prevent self-payments
+    if (recipient.id === user.id) {
+      return res.status(400).json({
+        success: false,
+        error: "You cannot send money to yourself",
+      });
+    }
+
+    // Check sender's wallet balance
+    const fromWallet = getUserWallet(user.id);
+    if (!fromWallet || fromWallet.balance < amountNum) {
+      return res.status(400).json({
+        success: false,
+        error: "Insufficient wallet balance",
+      });
+    }
+
+    // Get recipient's wallet
+    const toWallet = getUserWallet(recipient.id);
+    if (!toWallet) {
+      return res.status(404).json({
+        success: false,
+        error: "Recipient wallet not found",
+      });
+    }
+
+    // Update wallets
     updateWallet(user.id, {
-      balance: wallet.balance - amountNum,
+      balance: fromWallet.balance - amountNum,
     });
 
-    // Create transaction record
+    updateWallet(recipient.id, {
+      balance: toWallet.balance + amountNum,
+    });
+
+    // Create transaction records
     createTransaction({
       userId: user.id,
-      type: "social_payment",
-      amount: -amountNum,
-      description: `Social payment: ${message || type}`,
+      type: "transfer_out",
+      amount: amountNum,
+      description: `Social payment to ${getUserDisplayName(recipient)}`,
       status: "completed",
-      metadata: { to, type, message },
+      metadata: {
+        recipientId: recipient.id,
+        recipientName: getUserDisplayName(recipient),
+        type,
+        message,
+      },
+    });
+
+    createTransaction({
+      userId: recipient.id,
+      type: "transfer_in",
+      amount: amountNum,
+      description: `Social payment from ${getUserDisplayName(user)}`,
+      status: "completed",
+      metadata: {
+        senderId: user.id,
+        senderName: getUserDisplayName(user),
+        type,
+        message,
+      },
     });
 
     // Create social payment record
     const payment = createSocialPayment({
       fromUserId: user.id,
-      toUserId: "demo-user-id", // TODO: Implement proper user lookup
+      toUserId: recipient.id,
       amount: amountNum,
-      message,
+      message: message || `Payment from ${getUserDisplayName(user)}`,
       type: type || "payment",
       isPublic: isPublic || false,
     });
