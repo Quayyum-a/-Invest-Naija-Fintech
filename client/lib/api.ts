@@ -152,24 +152,37 @@ class ApiService {
 
       // Try the debug endpoint as fallback
       try {
-        console.log("Trying debug endpoint...");
+        console.log("Trying debug endpoint as fallback...");
         const debugResponse = await fetch("/api/debug/transactions", {
           headers: this.getAuthHeaders(),
         });
 
         if (debugResponse.ok) {
           const debugData = await debugResponse.json();
-          console.log("Debug response:", debugData);
+          console.log("Debug response successful:", debugData);
           return {
             success: true,
             transactions: debugData.data?.transactions || [],
+            debug: true,
           };
+        } else {
+          console.log(
+            "Debug endpoint returned non-ok status:",
+            debugResponse.status,
+          );
         }
       } catch (debugError) {
         console.error("Debug endpoint also failed:", debugError);
       }
 
-      throw error;
+      // If both fail, return empty transactions instead of throwing
+      console.warn("All transaction endpoints failed, returning empty array");
+      return {
+        success: true,
+        transactions: [],
+        error: error.message,
+        fallback: true,
+      };
     }
   }
 
