@@ -586,13 +586,10 @@ export default function Portfolio() {
             <Button
               variant="ghost"
               className="w-full text-naira-green"
-              onClick={() =>
-                toast({
-                  title: "Investment History",
-                  description:
-                    "Detailed investment transaction history coming soon!",
-                })
-              }
+              onClick={() => {
+                // Navigate to detailed transaction history
+                window.location.href = "/transactions?type=investment";
+              }}
             >
               View All Transactions
             </Button>
