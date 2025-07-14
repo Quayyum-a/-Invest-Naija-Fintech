@@ -99,10 +99,33 @@ export default function InvestmentProducts() {
     loadInvestmentData();
   }, []);
 
-  const loadInvestmentData = async () => {
+    const loadInvestmentData = async () => {
     try {
-      // Mock investment products with realistic Nigerian market data
-      const mockProducts: InvestmentProduct[] = [
+      // Fetch real investment products from API
+      const response = await fetch('/investments/products');
+      const result = await response.json();
+
+      if (result.success) {
+        setProducts(result.data.products);
+        setUserInvestments(result.data.userInvestments);
+        setPortfolioSummary(result.data.portfolioSummary);
+        setLoading(false);
+        return;
+      } else {
+        throw new Error(result.error || 'Failed to load investment data');
+      }
+    } catch (error) {
+      console.error('Error fetching investment data:', error);
+
+      // Show user-friendly error
+      toast({
+        title: "Warning",
+        description: "Unable to load live investment data. Please check your connection and try again.",
+        variant: "destructive",
+      });
+
+      // Fallback to basic sample data
+      const fallbackProducts: InvestmentProduct[] = [
         {
           id: "1",
           name: "91-Day Treasury Bills",
