@@ -8,6 +8,12 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { apiService } from "../lib/api";
 import {
+  TransactionManagement,
+  InvestmentManagement,
+  SystemAdministration,
+  ReportsAnalytics,
+} from "../components/admin/AdminComponents";
+import {
   Shield,
   Users,
   DollarSign,
@@ -561,8 +567,8 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle>Transaction Management</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p>Transaction management interface coming soon...</p>
+              <CardContent className="p-0">
+                <TransactionManagement />
               </CardContent>
             </Card>
           </TabsContent>
@@ -572,8 +578,8 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle>Investment Management</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p>Investment management interface coming soon...</p>
+              <CardContent className="p-0">
+                <InvestmentManagement />
               </CardContent>
             </Card>
           </TabsContent>
@@ -584,8 +590,8 @@ export default function AdminDashboard() {
                 <CardHeader>
                   <CardTitle>System Settings</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p>System administration interface coming soon...</p>
+                <CardContent className="p-0">
+                  <SystemAdministration />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -596,8 +602,8 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle>Reports & Analytics</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p>Reports and analytics interface coming soon...</p>
+              <CardContent className="p-0">
+                <ReportsAnalytics />
               </CardContent>
             </Card>
           </TabsContent>

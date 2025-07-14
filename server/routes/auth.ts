@@ -13,6 +13,12 @@ import {
   deleteSession,
   getSessionUser,
 } from "../data/storage";
+import {
+  registerSchema,
+  loginSchema,
+  validateSchema,
+} from "../validation/schemas";
+import { generateJWT } from "../middleware/auth";
 
 // Proper password hashing with bcrypt
 const hashPassword = async (password: string): Promise<string> => {
@@ -31,34 +37,6 @@ export const register: RequestHandler = async (req, res) => {
   try {
     const { email, password, phone, firstName, lastName }: RegisterRequest =
       req.body;
-
-    // Validation
-    if (!email || !password || !phone || !firstName || !lastName) {
-      return res.status(400).json({
-        success: false,
-        error: "All fields are required",
-      } as ErrorResponse);
-    }
-
-    // Password strength validation
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        error: "Password must be at least 8 characters long",
-      } as ErrorResponse);
-    }
-
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-
-    if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
-      return res.status(400).json({
-        success: false,
-        error:
-          "Password must contain uppercase letters, lowercase letters, and numbers",
-      } as ErrorResponse);
-    }
 
     // Check if user already exists
     const existingUser = getUserByEmail(email);
@@ -79,14 +57,19 @@ export const register: RequestHandler = async (req, res) => {
       lastName,
     });
 
-    // Create session
-    const token = createSession(user.id);
+    // Create JWT token and session
+    const jwtToken = generateJWT(user.id);
+    const sessionToken = createSession(user.id);
+
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = user;
 
     res.status(201).json({
       success: true,
       message: "User registered successfully",
-      user,
-      token,
+      user: userWithoutPassword,
+      token: jwtToken,
+      sessionToken, // For backwards compatibility
     } as AuthResponse);
   } catch (error) {
     console.error("Registration error:", error);
@@ -100,14 +83,6 @@ export const register: RequestHandler = async (req, res) => {
 export const login: RequestHandler = async (req, res) => {
   try {
     const { email, password }: LoginRequest = req.body;
-
-    // Validation
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: "Email and password are required",
-      } as ErrorResponse);
-    }
 
     // Find user
     const user = getUserByEmail(email);
@@ -135,15 +110,17 @@ export const login: RequestHandler = async (req, res) => {
       } as ErrorResponse);
     }
 
-    // Create session
-    const token = createSession(user.id);
+    // Create JWT token and session
+    const jwtToken = generateJWT(user.id);
+    const sessionToken = createSession(user.id);
     const { password: _, ...userWithoutPassword } = user;
 
     res.json({
       success: true,
       message: "Login successful",
       user: userWithoutPassword,
-      token,
+      token: jwtToken,
+      sessionToken, // For backwards compatibility
     } as AuthResponse);
   } catch (error) {
     console.error("Login error:", error);

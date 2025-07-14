@@ -35,7 +35,7 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { apiService } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
 interface AnalyticsData {
@@ -94,7 +94,7 @@ export default function Analytics() {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/analytics/user?range=${timeRange}`);
+      const response = await apiService.getUserAnalytics();
       setData(response.data);
     } catch (error) {
       console.error("Failed to fetch analytics:", error);

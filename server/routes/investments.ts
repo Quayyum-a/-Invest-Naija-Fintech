@@ -8,21 +8,43 @@ import {
   getUserInvestments,
   updateInvestment,
 } from "../data/storage";
-import { createInvestmentProducts } from "../data/init";
+import { InvestmentService } from "../services/investmentService";
 
-export const getInvestmentProducts: RequestHandler = (req, res) => {
+export const getInvestmentProducts: RequestHandler = async (req, res) => {
   try {
-    const products = createInvestmentProducts();
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "Authentication required",
+      } as ErrorResponse);
+    }
+
+    const products = InvestmentService.getAvailableProducts();
+    const portfolio = await InvestmentService.getUserPortfolio(userId);
+
+    // Get recommendations based on user profile
+    const recommendations = InvestmentService.getRecommendations(
+      req.user.kycStatus || "unverified",
+      "moderate", // Default risk tolerance
+      "growth", // Default investment goal
+    );
 
     res.json({
       success: true,
-      products,
+      data: {
+        products,
+        userInvestments: portfolio.userInvestments,
+        portfolioSummary: portfolio.portfolioSummary,
+        recommendations,
+      },
     });
   } catch (error) {
     console.error("Get investment products error:", error);
     res.status(500).json({
       success: false,
-      error: "Internal server error",
+      error: "Failed to load investment data",
     } as ErrorResponse);
   }
 };

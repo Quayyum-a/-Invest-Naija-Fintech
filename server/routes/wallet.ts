@@ -16,6 +16,21 @@ import {
   createInvestment,
   updateTransaction,
 } from "../data/storage";
+import { walletService } from "../services/walletService";
+import { paymentsService } from "../services/paymentsService";
+import {
+  fundWalletSchema,
+  transferSchema,
+  withdrawSchema,
+  transactionHistorySchema,
+  investmentSchema,
+  validateSchema,
+} from "../validation/schemas";
+import {
+  validateRecipient,
+  getUserDisplayName,
+  canReceiveMoney,
+} from "../data/userLookup";
 
 export const getWallet: RequestHandler = (req, res) => {
   try {
@@ -429,5 +444,239 @@ export const getPortfolioData: RequestHandler = (req, res) => {
       success: false,
       error: "Internal server error",
     } as ErrorResponse);
+  }
+};
+
+// Enhanced wallet endpoints with real-time features
+
+export const initiateWalletFunding: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const userEmail = req.user?.email;
+
+    if (!userId || !userEmail) {
+      return res.status(401).json({
+        success: false,
+        error: "User not authenticated",
+      });
+    }
+
+    const { amount, provider = "paystack" } = req.body;
+
+    const result = await paymentsService.initializePaystackPayment(
+      userId,
+      amount,
+      userEmail,
+    );
+
+    if (result.success) {
+      res.json({
+        success: true,
+        data: result.data,
+        message: "Payment initialization successful",
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Initiate wallet funding error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+};
+
+export const verifyWalletFunding: RequestHandler = async (req, res) => {
+  try {
+    const { reference } = req.params;
+
+    if (!reference) {
+      return res.status(400).json({
+        success: false,
+        error: "Payment reference is required",
+      });
+    }
+
+    const result = await paymentsService.verifyPaystackPayment(reference);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        data: result.data,
+        message: "Payment verified successfully",
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Verify wallet funding error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+};
+
+export const transferToUser: RequestHandler = async (req, res) => {
+  try {
+    const fromUserId = req.user?.id;
+    if (!fromUserId) {
+      return res.status(401).json({
+        success: false,
+        error: "User not authenticated",
+      });
+    }
+
+    const { toUserIdentifier, amount, description } = req.body;
+
+    // Validate and find recipient
+    const recipientValidation = validateRecipient(toUserIdentifier);
+
+    if (!recipientValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: recipientValidation.error,
+      });
+    }
+
+    const recipient = recipientValidation.user!;
+
+    // Check if recipient can receive this amount
+    const canReceive = canReceiveMoney(recipient, amount);
+    if (!canReceive.canReceive) {
+      return res.status(400).json({
+        success: false,
+        error: canReceive.reason,
+      });
+    }
+
+    // Prevent self-transfers
+    if (recipient.id === fromUserId) {
+      return res.status(400).json({
+        success: false,
+        error: "You cannot transfer money to yourself",
+      });
+    }
+
+    const toUserId = recipient.id;
+
+    const result = await walletService.transferFunds(
+      fromUserId,
+      toUserId,
+      amount,
+      description,
+    );
+
+    if (result.success) {
+      res.json({
+        success: true,
+        transaction: result.transaction,
+        message: "Transfer successful",
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Transfer to user error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+};
+
+export const withdrawToBank: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "User not authenticated",
+      });
+    }
+
+    const { amount, bankDetails } = req.body;
+
+    const result = await walletService.withdrawToBank(
+      userId,
+      amount,
+      bankDetails,
+    );
+
+    if (result.success) {
+      res.json({
+        success: true,
+        transaction: result.transaction,
+        message: "Withdrawal initiated successfully",
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Withdraw to bank error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+};
+
+export const getTransactionHistory: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "User not authenticated",
+      });
+    }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const filters = {
+      type: req.query.type as string,
+      status: req.query.status as string,
+      startDate: req.query.startDate as string,
+      endDate: req.query.endDate as string,
+    };
+
+    const result = await walletService.getTransactionHistory(
+      userId,
+      page,
+      limit,
+      filters,
+    );
+
+    if (result.success) {
+      res.json({
+        success: true,
+        transactions: result.transactions,
+        pagination: result.pagination,
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Get transaction history error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
   }
 };

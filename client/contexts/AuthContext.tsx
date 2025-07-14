@@ -164,6 +164,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     lastName: string;
   }): Promise<AuthResponse> => {
     try {
+      console.log("Attempting registration with:", {
+        email: userData.email,
+        endpoint: "/api/auth/register",
+      });
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
@@ -171,6 +175,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         },
         body: JSON.stringify(userData),
       });
+
+      console.log("Registration response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(
+          "Registration failed with status:",
+          response.status,
+          "Error:",
+          errorText,
+        );
+
+        try {
+          const errorData = JSON.parse(errorText);
+          return {
+            success: false,
+            message:
+              errorData.message ||
+              errorData.error ||
+              `Server error: ${response.status}`,
+          };
+        } catch {
+          return {
+            success: false,
+            message: `Server error: ${response.status} - ${errorText}`,
+          };
+        }
+      }
 
       const data: AuthResponse = await response.json();
 

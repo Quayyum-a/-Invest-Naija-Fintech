@@ -6,9 +6,23 @@ class PaystackService {
   private baseUrl = "https://api.paystack.co";
 
   constructor() {
-    this.apiKey =
-      process.env.PAYSTACK_SECRET_KEY ||
-      "sk_test_52dc872013582129d489989e914c772186924031";
+    this.apiKey = process.env.PAYSTACK_SECRET_KEY;
+
+    // Allow missing API key during build process
+    if (!this.apiKey && process.env.NODE_ENV !== "development") {
+      console.warn(
+        "PAYSTACK_SECRET_KEY environment variable not set. Payment features will be disabled.",
+      );
+    }
+
+    if (
+      this.apiKey &&
+      this.apiKey.includes("test") &&
+      process.env.NODE_ENV === "production"
+    ) {
+      console.error("Test API keys cannot be used in production");
+      throw new Error("Invalid API key for production environment");
+    }
   }
 
   // Initialize payment transaction
@@ -20,20 +34,11 @@ class PaystackService {
     callback_url?: string;
   }) {
     try {
-      // Check if we have a valid API key
-      if (!this.apiKey || this.apiKey.includes("demo")) {
-        console.warn(
-          "Using demo/invalid Paystack key - returning mock response",
+      // Validate API key is properly configured
+      if (!this.apiKey) {
+        throw new Error(
+          "Payment service not configured. Please add PAYSTACK_SECRET_KEY environment variable.",
         );
-        return {
-          status: true,
-          message: "Authorization URL created",
-          data: {
-            authorization_url: `${data.callback_url}?reference=${data.reference}&status=success&demo=true`,
-            access_code: "demo_access_code",
-            reference: data.reference || `demo_${Date.now()}`,
-          },
-        };
       }
 
       const response = await axios.post(

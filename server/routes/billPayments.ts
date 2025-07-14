@@ -9,6 +9,13 @@ import {
   updateWallet,
   createTransaction,
 } from "../data/storage";
+import { paymentsService } from "../services/paymentsService";
+import {
+  airtimeSchema,
+  electricityBillSchema,
+  cableTvSchema,
+  validateSchema,
+} from "../validation/schemas";
 
 // Get available billers
 export const getBillers: RequestHandler = async (req, res) => {
@@ -43,13 +50,6 @@ export const validateCustomer: RequestHandler = async (req, res) => {
   try {
     const { billerId, customerCode } = req.body;
 
-    if (!billerId || !customerCode) {
-      return res.status(400).json({
-        success: false,
-        error: "Biller ID and customer code are required",
-      });
-    }
-
     const result = await billPaymentService.validateCustomer(
       billerId,
       customerCode,
@@ -76,13 +76,6 @@ export const payElectricityBill: RequestHandler = async (req, res) => {
     }
 
     const { billerId, meterNumber, amount, customerName } = req.body;
-
-    if (!billerId || !meterNumber || !amount || amount <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid payment details",
-      });
-    }
 
     // Check wallet balance
     const wallet = getUserWallet(userId);
@@ -160,13 +153,6 @@ export const buyAirtime: RequestHandler = async (req, res) => {
 
     const { network, phoneNumber, amount } = req.body;
 
-    if (!network || !phoneNumber || !amount || amount <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid airtime purchase details",
-      });
-    }
-
     // Check wallet balance
     const wallet = getUserWallet(userId);
     if (!wallet || wallet.balance < amount) {
@@ -237,13 +223,6 @@ export const buyDataBundle: RequestHandler = async (req, res) => {
     }
 
     const { network, phoneNumber, planId, amount } = req.body;
-
-    if (!network || !phoneNumber || !planId || !amount || amount <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid data bundle details",
-      });
-    }
 
     // Check wallet balance
     const wallet = getUserWallet(userId);
@@ -318,13 +297,6 @@ export const payCableTVBill: RequestHandler = async (req, res) => {
     }
 
     const { provider, smartCardNumber, planId, amount } = req.body;
-
-    if (!provider || !smartCardNumber || !planId || !amount || amount <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid cable TV payment details",
-      });
-    }
 
     // Check wallet balance
     const wallet = getUserWallet(userId);

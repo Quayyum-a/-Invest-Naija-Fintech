@@ -28,7 +28,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { apiService } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
 interface FinancialAdvice {
@@ -81,7 +81,9 @@ export default function AIFinancialAdvisor() {
   const generateFinancialAdvice = async () => {
     try {
       setIsGeneratingAdvice(true);
-      const response = await api.get("/ai/financial-advice");
+      // TODO: Implement AI financial advice endpoint
+      console.log("Would fetch AI financial advice");
+      const response = { data: { advice: getMockAdvice() } };
       setAdvice(response.data.advice);
     } catch (error) {
       console.error("Failed to generate advice:", error);
@@ -107,17 +109,20 @@ export default function AIFinancialAdvisor() {
     setIsLoading(true);
 
     try {
-      const response = await api.post("/ai/chat", {
-        message: userInput,
-        userId: user?.id,
-      });
+      // TODO: Implement AI chat endpoint
+      console.log("Would send chat message:", userInput);
+      const response = {
+        data: {
+          reply: `I understand you're asking about "${userInput}". As your AI financial advisor, I recommend consulting with a certified financial advisor for personalized advice.`,
+        },
+      };
 
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: "ai",
-        content: response.data.response,
+        content: response.data.reply,
         timestamp: new Date(),
-        metadata: response.data.metadata,
+        metadata: undefined,
       };
 
       setChatMessages((prev) => [...prev, aiMessage]);

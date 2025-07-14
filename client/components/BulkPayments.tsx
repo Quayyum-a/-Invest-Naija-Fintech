@@ -93,42 +93,21 @@ export default function BulkPayments() {
   const loadBulkPayments = async () => {
     setLoading(true);
     try {
-      // Mock data
-      const mockPayments: BulkPayment[] = [
-        {
-          id: "1",
-          name: "January 2024 Salary",
-          totalAmount: 45000000,
-          recipientCount: 45,
-          status: "completed",
-          createdAt: "2024-01-31",
-          processedAt: "2024-01-31",
-          description: "Monthly salary payment for all employees",
-          type: "salary",
+      // Fetch real bulk payments from API
+      const response = await fetch("/api/bulk-payments", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        {
-          id: "2",
-          name: "Q4 Vendor Payments",
-          totalAmount: 15750000,
-          recipientCount: 12,
-          status: "processing",
-          createdAt: "2024-01-15",
-          description: "Quarterly payments to vendors and suppliers",
-          type: "vendor",
-        },
-        {
-          id: "3",
-          name: "Year-end Bonuses",
-          totalAmount: 8500000,
-          recipientCount: 38,
-          status: "draft",
-          createdAt: "2024-01-10",
-          description: "Performance bonuses for 2023",
-          type: "bonus",
-        },
-      ];
+      });
 
-      setBulkPayments(mockPayments);
+      const result = await response.json();
+
+      if (result.success) {
+        setBulkPayments(result.data || []);
+      } else {
+        // Fallback to empty array if no data
+        setBulkPayments([]);
+      }
     } catch (error) {
       console.error("Failed to load bulk payments:", error);
       toast({
@@ -221,39 +200,95 @@ export default function BulkPayments() {
     });
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Simulate CSV parsing
-      const mockRecipients: PaymentRecipient[] = [
-        {
-          id: "csv1",
-          name: "John Doe",
-          accountNumber: "1234567890",
-          bankCode: "044",
-          bankName: "Access Bank",
-          amount: 150000,
-          narration: "Salary January 2024",
-          status: "pending",
-        },
-        {
-          id: "csv2",
-          name: "Jane Smith",
-          accountNumber: "0987654321",
-          bankCode: "058",
-          bankName: "GTBank",
-          amount: 200000,
-          narration: "Salary January 2024",
-          status: "pending",
-        },
-      ];
+    if (file && file.type === "text/csv") {
+      try {
+        // Parse actual CSV file
+        const text = await file.text();
+        const lines = text.split("\n").filter((line) => line.trim());
 
-      setRecipients([...recipients, ...mockRecipients]);
+        if (lines.length < 2) {
+          toast({
+            title: "Error",
+            description:
+              "CSV file must contain headers and at least one data row",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const parsedRecipients: PaymentRecipient[] = [];
+
+        // Parse each line (skip header)
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i]
+            .split(",")
+            .map((v) => v.trim().replace(/"/g, ""));
+
+          if (
+            values.length >= 4 &&
+            values[0] &&
+            values[1] &&
+            values[2] &&
+            values[3]
+          ) {
+            parsedRecipients.push({
+              id: `csv-${Date.now()}-${i}`,
+              name: values[0],
+              accountNumber: values[1],
+              bankCode: values[2],
+              bankName: getBankName(values[2]),
+              amount: parseFloat(values[3]) || 0,
+              narration: values[4] || "Bulk Payment",
+              status: "pending",
+            });
+          }
+        }
+
+        if (parsedRecipients.length > 0) {
+          setRecipients([...recipients, ...parsedRecipients]);
+          toast({
+            title: "Success",
+            description: `${parsedRecipients.length} recipients imported from CSV`,
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "No valid recipients found in CSV file",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to parse CSV file",
+          variant: "destructive",
+        });
+      }
+    } else {
       toast({
-        title: "Success",
-        description: `${mockRecipients.length} recipients imported from CSV`,
+        title: "Error",
+        description: "Please select a valid CSV file",
+        variant: "destructive",
       });
     }
+  };
+
+  // Helper function to get bank name from code
+  const getBankName = (code: string): string => {
+    const bankCodes: Record<string, string> = {
+      "044": "Access Bank",
+      "058": "GTBank",
+      "033": "United Bank for Africa",
+      "030": "Heritage Bank",
+      "011": "First Bank",
+      "221": "Stanbic IBTC Bank",
+      "214": "First City Monument Bank",
+    };
+    return bankCodes[code] || "Unknown Bank";
   };
 
   const downloadTemplate = () => {

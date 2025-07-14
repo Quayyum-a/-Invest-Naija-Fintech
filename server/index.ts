@@ -9,6 +9,7 @@ import {
   authRateLimit,
   otpRateLimit,
   transactionRateLimit,
+  strictRateLimit,
   securityHeaders,
   requestLogger,
   validateInput,
@@ -18,7 +19,40 @@ import {
   validatePassword,
   errorHandler,
   notFoundHandler,
+  fraudDetection,
+  geoValidation,
+  deviceFingerprinting,
+  securityLogger,
 } from "./middleware/security";
+import {
+  requestMetrics,
+  healthCheck,
+  getMetrics,
+  resetMetrics,
+  readinessCheck,
+  livenessCheck,
+  startMonitoring,
+} from "./middleware/monitoring";
+import {
+  registerSchema,
+  loginSchema,
+  fundWalletSchema,
+  transferSchema,
+  withdrawSchema,
+  transactionHistorySchema,
+  investmentSchema,
+  airtimeSchema,
+  electricityBillSchema,
+  cableTvSchema,
+  kycSchema,
+  createGroupSchema,
+  moneyRequestSchema,
+  socialPaymentSchema,
+  cryptoTradeSchema,
+  businessAccountSchema,
+  bulkPaymentSchema,
+  validateSchema,
+} from "./validation/schemas";
 
 // Auth routes
 import { register, login, logout, getCurrentUser } from "./routes/auth";
@@ -32,6 +66,11 @@ import {
   getTransactions,
   getDashboardData,
   getPortfolioData,
+  initiateWalletFunding,
+  verifyWalletFunding,
+  transferToUser,
+  withdrawToBank,
+  getTransactionHistory,
 } from "./routes/wallet";
 
 // Services routes
@@ -133,6 +172,22 @@ import {
   verifyTransferAccount,
 } from "./routes/billPayments";
 
+// Social routes
+import {
+  getSocialGroups,
+  createGroup,
+  getMoneyRequests,
+  requestMoney,
+  getSocialPayments,
+  sendMoney,
+  getChallenges,
+} from "./routes/social";
+
+// Database viewer routes (development only)
+import { viewDatabase, getTableData, executeQuery } from "./routes/database";
+
+import NotificationService from "./services/notificationService";
+
 export function createServer() {
   // Log configuration on startup
   logConfigStatus();
@@ -141,7 +196,11 @@ export function createServer() {
 
   // Security middleware (apply early)
   app.use(securityHeaders);
-  app.use(requestLogger);
+  app.use(deviceFingerprinting);
+  app.use(geoValidation);
+  app.use(fraudDetection);
+  app.use(securityLogger);
+  app.use(requestMetrics); // Add performance monitoring
   app.use(generalRateLimit);
 
   // Basic middleware
@@ -158,10 +217,15 @@ export function createServer() {
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
   app.use(validateInput);
 
-  // Health check
+  // Health and monitoring endpoints
   app.get("/ping", (_req, res) => {
     res.json({ message: "InvestNaija API v1.0" });
   });
+  app.get("/health", healthCheck);
+  app.get("/ready", readinessCheck);
+  app.get("/live", livenessCheck);
+  app.get("/metrics", getMetrics);
+  app.post("/metrics/reset", resetMetrics);
 
   // Production API only - demo route removed
 
@@ -169,12 +233,10 @@ export function createServer() {
   app.post(
     "/auth/register",
     authRateLimit,
-    validateEmail,
-    validatePassword,
-    validateNigerianPhone,
+    validateSchema(registerSchema),
     register,
   );
-  app.post("/auth/login", authRateLimit, login);
+  app.post("/auth/login", authRateLimit, validateSchema(loginSchema), login);
   app.post("/auth/logout", logout);
   app.get("/auth/me", getCurrentUser);
 
@@ -210,10 +272,37 @@ export function createServer() {
     "/wallet/invest",
     authenticateToken,
     transactionRateLimit,
-    validateTransactionAmount,
+    validateSchema(investmentSchema),
     investMoney,
   );
   app.get("/transactions", authenticateToken, getTransactions);
+  app.get(
+    "/transactions/history",
+    authenticateToken,
+    validateSchema(transactionHistorySchema),
+    getTransactionHistory,
+  );
+
+  // Enhanced wallet routes
+  app.post(
+    "/wallet/fund",
+    authenticateToken,
+    validateSchema(fundWalletSchema),
+    initiateWalletFunding,
+  );
+  app.get("/wallet/verify/:reference", authenticateToken, verifyWalletFunding);
+  app.post(
+    "/wallet/transfer",
+    authenticateToken,
+    validateSchema(transferSchema),
+    transferToUser,
+  );
+  app.post(
+    "/wallet/withdraw",
+    authenticateToken,
+    validateSchema(withdrawSchema),
+    withdrawToBank,
+  );
 
   // Financial services routes
   app.get("/services", getServices);
@@ -263,10 +352,21 @@ export function createServer() {
     getInvestmentPerformance,
   );
 
-  // KYC routes (protected)
-  app.post("/kyc/submit", authenticateToken, submitKYCDocuments);
+  // KYC routes (protected with strict rate limiting)
+  app.post(
+    "/kyc/submit",
+    authenticateToken,
+    strictRateLimit,
+    validateSchema(kycSchema),
+    submitKYCDocuments,
+  );
   app.get("/kyc/status", authenticateToken, getKYCStatus);
-  app.post("/kyc/upload", authenticateToken, uploadKYCDocument);
+  app.post(
+    "/kyc/upload",
+    authenticateToken,
+    strictRateLimit,
+    uploadKYCDocument,
+  );
 
   // Payment routes
   app.get("/payments/banks", getBanks);
@@ -344,10 +444,16 @@ export function createServer() {
     "/crypto/buy",
     authenticateToken,
     transactionRateLimit,
-    validateTransactionAmount,
+    validateSchema(cryptoTradeSchema),
     buyCrypto,
   );
-  app.post("/crypto/sell", authenticateToken, transactionRateLimit, sellCrypto);
+  app.post(
+    "/crypto/sell",
+    authenticateToken,
+    transactionRateLimit,
+    validateSchema(cryptoTradeSchema),
+    sellCrypto,
+  );
 
   // Bill payment routes
   app.get("/bills/billers", getBillers);
@@ -357,14 +463,14 @@ export function createServer() {
     "/bills/pay-electricity",
     authenticateToken,
     transactionRateLimit,
-    validateTransactionAmount,
+    validateSchema(electricityBillSchema),
     payElectricityBill,
   );
   app.post(
     "/bills/buy-airtime",
     authenticateToken,
     transactionRateLimit,
-    validateTransactionAmount,
+    validateSchema(airtimeSchema),
     buyAirtime,
   );
   app.post(
@@ -378,7 +484,7 @@ export function createServer() {
     "/bills/pay-cable-tv",
     authenticateToken,
     transactionRateLimit,
-    validateTransactionAmount,
+    validateSchema(cableTvSchema),
     payCableTVBill,
   );
 
@@ -393,12 +499,56 @@ export function createServer() {
     initiateTransfer,
   );
 
-  // Admin routes (protected)
-  app.get("/admin/stats", authenticateToken, getAdminStats);
-  app.get("/admin/users", authenticateToken, getAllUsersAdmin);
-  app.get("/admin/users/:userId", authenticateToken, getUserDetails);
-  app.put("/admin/users/:userId/kyc", authenticateToken, updateUserKYC);
-  app.put("/admin/users/:userId/status", authenticateToken, updateUserStatus);
+  // Admin routes (protected with strict rate limiting)
+  app.get("/admin/stats", authenticateToken, strictRateLimit, getAdminStats);
+  app.get("/admin/users", authenticateToken, strictRateLimit, getAllUsersAdmin);
+  app.get(
+    "/admin/users/:userId",
+    authenticateToken,
+    strictRateLimit,
+    getUserDetails,
+  );
+  app.put(
+    "/admin/users/:userId/kyc",
+    authenticateToken,
+    strictRateLimit,
+    updateUserKYC,
+  );
+  app.put(
+    "/admin/users/:userId/status",
+    authenticateToken,
+    strictRateLimit,
+    updateUserStatus,
+  );
+
+  // Social banking routes (protected)
+  app.get("/social/groups", authenticateToken, getSocialGroups);
+  app.post(
+    "/social/groups",
+    authenticateToken,
+    validateSchema(createGroupSchema),
+    createGroup,
+  );
+  app.get("/social/requests", authenticateToken, getMoneyRequests);
+  app.post(
+    "/social/requests",
+    authenticateToken,
+    validateSchema(moneyRequestSchema),
+    requestMoney,
+  );
+  app.get("/social/payments", authenticateToken, getSocialPayments);
+  app.post(
+    "/social/payments",
+    authenticateToken,
+    validateSchema(socialPaymentSchema),
+    sendMoney,
+  );
+  app.get("/social/challenges", authenticateToken, getChallenges);
+
+  // Database viewer routes (development only)
+  app.get("/dev/database", viewDatabase);
+  app.get("/dev/database/:tableName", getTableData);
+  app.post("/dev/database/query", executeQuery);
 
   // Initialize app on first startup
   try {
@@ -406,6 +556,9 @@ export function createServer() {
   } catch (error) {
     console.log("App already initialized or initialization skipped");
   }
+
+  // Start monitoring services
+  startMonitoring();
 
   // Error handling middleware (must be last)
   app.use(notFoundHandler);

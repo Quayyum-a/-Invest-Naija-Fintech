@@ -28,6 +28,7 @@ const BusinessBanking = lazy(() => import("./pages/BusinessBanking"));
 const SocialPage = lazy(() => import("./pages/SocialPage"));
 const Investments = lazy(() => import("./pages/Investments"));
 const SuperAdmin = lazy(() => import("./pages/SuperAdmin"));
+const DatabaseViewer = lazy(() => import("./components/DatabaseViewer"));
 
 const queryClient = new QueryClient();
 
@@ -153,6 +154,14 @@ const App = () => (
                       <SuperAdmin />
                     </SuspenseWrapper>
                   </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/database"
+                element={
+                  <SuspenseWrapper>
+                    <DatabaseViewer />
+                  </SuspenseWrapper>
                 }
               />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
