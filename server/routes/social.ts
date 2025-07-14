@@ -195,11 +195,38 @@ export const requestMoney: RequestHandler = async (req, res) => {
       });
     }
 
-    // For demo purposes, we'll use phone number to find user
-    // In production, you'd have a proper user lookup system
+    // Validate and find recipient
+    const recipientValidation = validateRecipient(to);
+
+    if (!recipientValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: recipientValidation.error,
+      });
+    }
+
+    const recipient = recipientValidation.user!;
+
+    // Check if recipient can receive this amount
+    const canReceive = canReceiveMoney(recipient, parseFloat(amount));
+    if (!canReceive.canReceive) {
+      return res.status(400).json({
+        success: false,
+        error: canReceive.reason,
+      });
+    }
+
+    // Prevent self-requests
+    if (recipient.id === user.id) {
+      return res.status(400).json({
+        success: false,
+        error: "You cannot request money from yourself",
+      });
+    }
+
     const request = createMoneyRequest({
       fromUserId: user.id,
-      toUserId: "demo-user-id", // TODO: Implement proper user lookup
+      toUserId: recipient.id,
       amount: parseFloat(amount),
       reason,
       dueDate,
@@ -207,10 +234,11 @@ export const requestMoney: RequestHandler = async (req, res) => {
 
     // Create notification for recipient
     createNotification({
-      userId: "demo-user-id",
+      userId: recipient.id,
       title: "Money Request",
-      message: `${user.firstName} ${user.lastName} requested ₦${amount.toLocaleString()}`,
+      message: `${getUserDisplayName(user)} requested ₦${amount.toLocaleString()}`,
       type: "money_request",
+      metadata: { requestId: request.id },
     });
 
     res.json({
