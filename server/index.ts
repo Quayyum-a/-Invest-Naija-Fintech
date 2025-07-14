@@ -572,6 +572,7 @@ export function createServer() {
   startMonitoring();
 
   // Error handling middleware (must be last)
+  app.use(apiErrorHandler); // API-specific error handler
   app.use(notFoundHandler);
   app.use(errorHandler);
 
