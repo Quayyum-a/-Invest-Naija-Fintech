@@ -186,6 +186,9 @@ import {
 // Database viewer routes (development only)
 import { viewDatabase, getTableData, executeQuery } from "./routes/database";
 
+// Debug routes (development only)
+import { debugTransactions, debugPing } from "./routes/debug";
+
 import NotificationService from "./services/notificationService";
 
 export function createServer() {
