@@ -8,6 +8,12 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { apiService } from "../lib/api";
 import {
+  TransactionManagement,
+  InvestmentManagement,
+  SystemAdministration,
+  ReportsAnalytics,
+} from "../components/admin/AdminComponents";
+import {
   Shield,
   Users,
   DollarSign,
