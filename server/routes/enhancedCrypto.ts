@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { z } from "zod";
 import axios from "axios";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 import {
   getUserWallet,
   updateWallet,
@@ -127,7 +127,7 @@ export const getCryptoMarketData: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to fetch cryptocurrency data. Please try again.",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -139,7 +139,7 @@ export const getUserCryptoPortfolio: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     // In a real implementation, fetch from crypto_holdings table
@@ -164,7 +164,7 @@ export const getUserCryptoPortfolio: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to fetch crypto portfolio",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -176,7 +176,7 @@ export const buyCryptocurrency: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = cryptoTradeSchema.parse(req.body);
@@ -186,7 +186,7 @@ export const buyCryptocurrency: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "This endpoint only supports buying cryptocurrency",
-      } as ErrorResponse);
+      });
     }
 
     // Check KYC status for crypto trading
@@ -194,7 +194,7 @@ export const buyCryptocurrency: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "KYC verification required for cryptocurrency trading",
-      } as ErrorResponse);
+      });
     }
 
     // Get wallet
@@ -203,7 +203,7 @@ export const buyCryptocurrency: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Check sufficient balance
@@ -211,7 +211,7 @@ export const buyCryptocurrency: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     // Fetch current crypto price
@@ -225,7 +225,7 @@ export const buyCryptocurrency: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Cryptocurrency not found",
-      } as ErrorResponse);
+      });
     }
 
     const priceUSD = cryptoData.usd;
@@ -303,14 +303,14 @@ export const buyCryptocurrency: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Buy cryptocurrency error:", error);
     res.status(500).json({
       success: false,
       error: "Cryptocurrency purchase failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -322,7 +322,7 @@ export const sellCryptocurrency: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     // For simulation, return appropriate message
@@ -338,7 +338,7 @@ export const sellCryptocurrency: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Cryptocurrency sale failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -350,7 +350,7 @@ export const getCryptoWatchlist: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     // In a real implementation, fetch from user_crypto_watchlist table
@@ -378,7 +378,7 @@ export const getCryptoWatchlist: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to fetch crypto watchlist",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -390,7 +390,7 @@ export const addToWatchlist: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = cryptoWatchlistSchema.parse(req.body);
@@ -427,14 +427,14 @@ export const addToWatchlist: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Add to watchlist error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to add to watchlist",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -473,7 +473,7 @@ export const getCryptoNews: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to fetch crypto news",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -485,7 +485,7 @@ export const getTradingStats: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     // In a real implementation, calculate from transaction history
@@ -510,6 +510,6 @@ export const getTradingStats: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to fetch trading statistics",
-    } as ErrorResponse);
+    });
   }
 };

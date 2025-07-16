@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 import {
   getAllUsers,
   getUserCount,
@@ -57,7 +57,7 @@ export const getAdminStats: RequestHandler = async (req, res) => {
       return res.status(403).json({
         success: false,
         error: "Admin access required",
-      } as ErrorResponse);
+      });
     }
 
     // Get real stats from database
@@ -107,7 +107,7 @@ export const getAllUsersAdmin: RequestHandler = (req, res) => {
       return res.status(403).json({
         success: false,
         error: "Admin access required",
-      } as ErrorResponse);
+      });
     }
 
     const users = getAllUsers();
@@ -133,7 +133,7 @@ export const getAllUsersAdmin: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -143,7 +143,7 @@ export const updateUserKYC: RequestHandler = (req, res) => {
       return res.status(403).json({
         success: false,
         error: "Admin access required",
-      } as ErrorResponse);
+      });
     }
 
     const { userId } = req.params;
@@ -153,7 +153,7 @@ export const updateUserKYC: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid KYC status",
-      } as ErrorResponse);
+      });
     }
 
     const updatedUser = updateUser(userId, { kycStatus });
@@ -161,7 +161,7 @@ export const updateUserKYC: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "User not found",
-      } as ErrorResponse);
+      });
     }
 
     res.json({
@@ -174,7 +174,7 @@ export const updateUserKYC: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -184,7 +184,7 @@ export const updateUserStatus: RequestHandler = (req, res) => {
       return res.status(403).json({
         success: false,
         error: "Super admin access required to change user status",
-      } as ErrorResponse);
+      });
     }
 
     const { userId } = req.params;
@@ -194,7 +194,7 @@ export const updateUserStatus: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid status",
-      } as ErrorResponse);
+      });
     }
 
     const updatedUser = updateUser(userId, { status });
@@ -202,7 +202,7 @@ export const updateUserStatus: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "User not found",
-      } as ErrorResponse);
+      });
     }
 
     res.json({
@@ -215,7 +215,7 @@ export const updateUserStatus: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -225,7 +225,7 @@ export const getUserDetails: RequestHandler = (req, res) => {
       return res.status(403).json({
         success: false,
         error: "Admin access required",
-      } as ErrorResponse);
+      });
     }
 
     const { userId } = req.params;
@@ -235,7 +235,7 @@ export const getUserDetails: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "User not found",
-      } as ErrorResponse);
+      });
     }
 
     res.json({
@@ -247,6 +247,6 @@ export const getUserDetails: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };

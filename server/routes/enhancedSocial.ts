@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 import {
   getUserWallet,
   updateWallet,
@@ -93,7 +93,7 @@ export const getSocialGroups: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     // Filter groups where user is a member
@@ -143,7 +143,7 @@ export const getSocialGroups: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to fetch social groups",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -155,7 +155,7 @@ export const createSocialGroup: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = createGroupSchema.parse(req.body);
@@ -175,7 +175,7 @@ export const createSocialGroup: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "KYC verification required to create groups",
-      } as ErrorResponse);
+      });
     }
 
     const groupId = `group_${Date.now()}_${randomUUID().slice(0, 8)}`;
@@ -247,14 +247,14 @@ export const createSocialGroup: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Create social group error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to create group",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -266,7 +266,7 @@ export const joinSocialGroup: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = joinGroupSchema.parse(req.body);
@@ -277,7 +277,7 @@ export const joinSocialGroup: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Group not found",
-      } as ErrorResponse);
+      });
     }
 
     // Check if group is full
@@ -285,7 +285,7 @@ export const joinSocialGroup: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Group is full",
-      } as ErrorResponse);
+      });
     }
 
     // Check if user is already a member
@@ -296,7 +296,7 @@ export const joinSocialGroup: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "You are already a member of this group",
-      } as ErrorResponse);
+      });
     }
 
     // Check invite code for private groups
@@ -304,7 +304,7 @@ export const joinSocialGroup: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid invite code",
-      } as ErrorResponse);
+      });
     }
 
     // Add user to group
@@ -370,14 +370,14 @@ export const joinSocialGroup: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Join social group error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to join group",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -389,7 +389,7 @@ export const getMoneyRequests: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const status = req.query.status as string;
@@ -444,7 +444,7 @@ export const getMoneyRequests: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to fetch money requests",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -456,7 +456,7 @@ export const sendMoneyRequest: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = moneyRequestSchema.parse(req.body);
@@ -467,7 +467,7 @@ export const sendMoneyRequest: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Cannot request money from yourself",
-      } as ErrorResponse);
+      });
     }
 
     // Find recipient
@@ -476,7 +476,7 @@ export const sendMoneyRequest: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Recipient not found",
-      } as ErrorResponse);
+      });
     }
 
     const requestId = `request_${Date.now()}_${randomUUID().slice(0, 8)}`;
@@ -537,14 +537,14 @@ export const sendMoneyRequest: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Send money request error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to send money request",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -556,7 +556,7 @@ export const respondToMoneyRequest: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = respondToRequestSchema.parse(req.body);
@@ -567,7 +567,7 @@ export const respondToMoneyRequest: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Money request not found",
-      } as ErrorResponse);
+      });
     }
 
     // Check if user is the recipient
@@ -575,7 +575,7 @@ export const respondToMoneyRequest: RequestHandler = async (req, res) => {
       return res.status(403).json({
         success: false,
         error: "You can only respond to requests sent to you",
-      } as ErrorResponse);
+      });
     }
 
     // Check if request is still pending
@@ -583,7 +583,7 @@ export const respondToMoneyRequest: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "This request has already been processed",
-      } as ErrorResponse);
+      });
     }
 
     if (action === "approve") {
@@ -593,7 +593,7 @@ export const respondToMoneyRequest: RequestHandler = async (req, res) => {
         return res.status(400).json({
           success: false,
           error: "Insufficient wallet balance",
-        } as ErrorResponse);
+        });
       }
 
       // Process the payment (similar to P2P transfer)
@@ -605,7 +605,7 @@ export const respondToMoneyRequest: RequestHandler = async (req, res) => {
         return res.status(404).json({
           success: false,
           error: "Recipient wallet not found",
-        } as ErrorResponse);
+        });
       }
 
       // Create transactions
@@ -693,14 +693,14 @@ export const respondToMoneyRequest: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Respond to money request error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to process request response",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -712,7 +712,7 @@ export const sendSocialPayment: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = socialPaymentSchema.parse(req.body);
@@ -724,7 +724,7 @@ export const sendSocialPayment: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Cannot send payment to yourself",
-      } as ErrorResponse);
+      });
     }
 
     // Find recipient
@@ -733,7 +733,7 @@ export const sendSocialPayment: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Recipient not found",
-      } as ErrorResponse);
+      });
     }
 
     // Get sender wallet
@@ -742,7 +742,7 @@ export const sendSocialPayment: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     // Get recipient wallet
@@ -751,7 +751,7 @@ export const sendSocialPayment: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Recipient wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     const reference = `social_payment_${Date.now()}_${userId.slice(0, 8)}`;
@@ -839,14 +839,14 @@ export const sendSocialPayment: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Send social payment error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to send payment",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -858,7 +858,7 @@ export const getFinancialChallenges: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const status = req.query.status as string;
@@ -898,6 +898,6 @@ export const getFinancialChallenges: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to fetch financial challenges",
-    } as ErrorResponse);
+    });
   }
 };

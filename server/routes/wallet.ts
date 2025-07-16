@@ -476,7 +476,7 @@ export const initiateWalletFunding: RequestHandler = async (req, res) => {
 
     const { amount, provider = "paystack" } = req.body;
 
-    const result = await paymentsService.initializePaystackPayment(
+    const result = await paymentService.initializePaystackPayment(
       userId,
       amount,
       userEmail,
@@ -514,7 +514,7 @@ export const verifyWalletFunding: RequestHandler = async (req, res) => {
       });
     }
 
-    const result = await paymentsService.verifyPaystackPayment(reference);
+    const result = await paymentService.verifyPaystackPayment(reference);
 
     if (result.success) {
       res.json({
@@ -580,7 +580,7 @@ export const transferToUser: RequestHandler = async (req, res) => {
 
     const toUserId = recipient.id;
 
-    const result = await walletService.transferFunds(
+    const result = await paymentService.transferFunds(
       fromUserId,
       toUserId,
       amount,
@@ -620,7 +620,7 @@ export const withdrawToBank: RequestHandler = async (req, res) => {
 
     const { amount, bankDetails } = req.body;
 
-    const result = await walletService.withdrawToBank(
+    const result = await paymentService.withdrawToBank(
       userId,
       amount,
       bankDetails,
@@ -666,7 +666,7 @@ export const getTransactionHistory: RequestHandler = async (req, res) => {
       endDate: req.query.endDate as string,
     };
 
-    const result = await walletService.getTransactionHistory(
+    const result = await paymentService.getTransactionHistory(
       userId,
       page,
       limit,

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 
 // Rate limiting storage (use Redis in production)
 const rateLimitStore = new Map<

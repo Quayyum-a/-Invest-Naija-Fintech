@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 import { updateUser, getUserById } from "../data/storage";
 
 export const submitKYCDocuments: RequestHandler = (req, res) => {
@@ -9,7 +9,7 @@ export const submitKYCDocuments: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { bvn, nin, documentType, documentNumber } = req.body;
@@ -18,7 +18,7 @@ export const submitKYCDocuments: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Either BVN or NIN is required",
-      } as ErrorResponse);
+      });
     }
 
     // Simulate BVN/NIN validation
@@ -30,14 +30,14 @@ export const submitKYCDocuments: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid BVN format",
-      } as ErrorResponse);
+      });
     }
 
     if (nin && !isValidNIN) {
       return res.status(400).json({
         success: false,
         error: "Invalid NIN format",
-      } as ErrorResponse);
+      });
     }
 
     // Update user with KYC information
@@ -51,7 +51,7 @@ export const submitKYCDocuments: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "User not found",
-      } as ErrorResponse);
+      });
     }
 
     res.json({
@@ -65,7 +65,7 @@ export const submitKYCDocuments: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -76,7 +76,7 @@ export const getKYCStatus: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const user = getUserById(userId);
@@ -84,7 +84,7 @@ export const getKYCStatus: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "User not found",
-      } as ErrorResponse);
+      });
     }
 
     res.json({
@@ -102,7 +102,7 @@ export const getKYCStatus: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -113,7 +113,7 @@ export const uploadKYCDocument: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     // In a real app, this would handle file uploads to cloud storage
@@ -124,7 +124,7 @@ export const uploadKYCDocument: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Document type and file name are required",
-      } as ErrorResponse);
+      });
     }
 
     // Simulate successful upload
@@ -146,6 +146,6 @@ export const uploadKYCDocument: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };

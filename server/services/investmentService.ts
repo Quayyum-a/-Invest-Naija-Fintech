@@ -1,9 +1,4 @@
 import {
-  InvestmentProduct,
-  UserInvestment,
-  PortfolioSummary,
-} from "@shared/api";
-import {
   getUserInvestments,
   getUserWallet,
   createInvestment,

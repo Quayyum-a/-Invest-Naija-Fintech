@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 import {
   getUserWallet,
   updateWallet,
@@ -18,7 +18,7 @@ export const getInvestmentProducts: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "Authentication required",
-      } as ErrorResponse);
+      });
     }
 
     const products = InvestmentService.getAvailableProducts();
@@ -45,7 +45,7 @@ export const getInvestmentProducts: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to load investment data",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -56,7 +56,7 @@ export const createRoundUpInvestment: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { purchaseAmount, roundUpAmount } = req.body;
@@ -65,7 +65,7 @@ export const createRoundUpInvestment: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid round-up amount",
-      } as ErrorResponse);
+      });
     }
 
     // Get current wallet
@@ -74,7 +74,7 @@ export const createRoundUpInvestment: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Check sufficient balance
@@ -82,7 +82,7 @@ export const createRoundUpInvestment: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance for round-up investment",
-      } as ErrorResponse);
+      });
     }
 
     // Create round-up investment
@@ -126,7 +126,7 @@ export const createRoundUpInvestment: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -137,7 +137,7 @@ export const withdrawInvestment: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { investmentId, amount } = req.body;
@@ -146,7 +146,7 @@ export const withdrawInvestment: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid withdrawal amount",
-      } as ErrorResponse);
+      });
     }
 
     // Get user's investments
@@ -157,14 +157,14 @@ export const withdrawInvestment: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Investment not found",
-      } as ErrorResponse);
+      });
     }
 
     if (investment.currentValue < amount) {
       return res.status(400).json({
         success: false,
         error: "Insufficient investment balance",
-      } as ErrorResponse);
+      });
     }
 
     // Get current wallet
@@ -173,7 +173,7 @@ export const withdrawInvestment: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Update investment
@@ -213,7 +213,7 @@ export const withdrawInvestment: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -224,7 +224,7 @@ export const getInvestmentPerformance: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const investments = getUserInvestments(userId);
@@ -258,7 +258,7 @@ export const getInvestmentPerformance: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 

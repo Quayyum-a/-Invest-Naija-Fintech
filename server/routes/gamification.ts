@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 import {
   getUserWallet,
   getUserTransactions,
@@ -301,7 +301,7 @@ export const getUserAchievements: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     // Check for new achievements
@@ -350,7 +350,7 @@ export const getUserAchievements: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -415,7 +415,7 @@ export const getLeaderboard: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -427,7 +427,7 @@ export const getUserLevel: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const wallet = getUserWallet(userId);
@@ -437,7 +437,7 @@ export const getUserLevel: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Calculate level based on portfolio value and achievements
@@ -495,7 +495,7 @@ export const getUserLevel: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -507,7 +507,7 @@ export const claimReward: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { achievementId } = req.body;
@@ -521,7 +521,7 @@ export const claimReward: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Achievement not completed or not found",
-      } as ErrorResponse);
+      });
     }
 
     const achievementDef = achievements.find((ach) => ach.id === achievementId);
@@ -529,7 +529,7 @@ export const claimReward: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Achievement definition not found",
-      } as ErrorResponse);
+      });
     }
 
     // Process reward
@@ -553,6 +553,6 @@ export const claimReward: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };

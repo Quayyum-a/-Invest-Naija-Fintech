@@ -1,10 +1,10 @@
 import { RequestHandler } from "express";
 import { z } from "zod";
-import {
-  WalletResponse,
-  TransactionResponse,
-  ErrorResponse,
-} from "@shared/api";
+// import {
+//   WalletResponse,
+//   TransactionResponse,
+//   ErrorResponse,
+// } from "@shared/api";
 import {
   getUserWallet,
   updateWallet,
@@ -48,7 +48,7 @@ export const getEnhancedWallet: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const wallet = getUserWallet(userId);
@@ -56,7 +56,7 @@ export const getEnhancedWallet: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Get recent transactions
@@ -92,7 +92,7 @@ export const getEnhancedWallet: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -104,7 +104,7 @@ export const initiateWalletFunding: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = fundWalletSchema.parse(req.body);
@@ -116,7 +116,7 @@ export const initiateWalletFunding: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // KYC limits for unverified users
@@ -124,7 +124,7 @@ export const initiateWalletFunding: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "KYC verification required for wallet balance above ₦50,000",
-      } as ErrorResponse);
+      });
     }
 
     const reference = `fund_${Date.now()}_${userId.slice(0, 8)}`;
@@ -173,21 +173,21 @@ export const initiateWalletFunding: RequestHandler = async (req, res) => {
       res.status(400).json({
         success: false,
         error: "Payment initialization failed",
-      } as ErrorResponse);
+      });
     }
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Initiate wallet funding error:", error);
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -199,7 +199,7 @@ export const verifyWalletFunding: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { reference } = req.params;
@@ -216,7 +216,7 @@ export const verifyWalletFunding: RequestHandler = async (req, res) => {
         return res.status(404).json({
           success: false,
           error: "Wallet not found",
-        } as ErrorResponse);
+        });
       }
 
       // Update transaction status
@@ -228,7 +228,7 @@ export const verifyWalletFunding: RequestHandler = async (req, res) => {
         return res.status(404).json({
           success: false,
           error: "Transaction not found",
-        } as ErrorResponse);
+        });
       }
 
       const transaction = transactions[0];
@@ -274,14 +274,14 @@ export const verifyWalletFunding: RequestHandler = async (req, res) => {
       res.status(400).json({
         success: false,
         error: "Payment verification failed",
-      } as ErrorResponse);
+      });
     }
   } catch (error) {
     console.error("Verify wallet funding error:", error);
     res.status(500).json({
       success: false,
       error: "Payment verification failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -293,7 +293,7 @@ export const transferToUser: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = transferSchema.parse(req.body);
@@ -304,7 +304,7 @@ export const transferToUser: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Cannot transfer to yourself",
-      } as ErrorResponse);
+      });
     }
 
     // Get sender wallet
@@ -313,7 +313,7 @@ export const transferToUser: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Check sufficient balance
@@ -321,7 +321,7 @@ export const transferToUser: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     // Find recipient
@@ -330,7 +330,7 @@ export const transferToUser: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Recipient not found",
-      } as ErrorResponse);
+      });
     }
 
     // Get recipient wallet
@@ -339,7 +339,7 @@ export const transferToUser: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Recipient wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     const reference = `transfer_${Date.now()}_${userId.slice(0, 8)}`;
@@ -431,14 +431,14 @@ export const transferToUser: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Transfer to user error:", error);
     res.status(500).json({
       success: false,
       error: "Transfer failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -450,7 +450,7 @@ export const withdrawToBank: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = withdrawSchema.parse(req.body);
@@ -462,7 +462,7 @@ export const withdrawToBank: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "KYC verification required for withdrawals above ₦10,000",
-      } as ErrorResponse);
+      });
     }
 
     // Get wallet
@@ -471,7 +471,7 @@ export const withdrawToBank: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Check sufficient balance
@@ -479,7 +479,7 @@ export const withdrawToBank: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     const reference = `withdraw_${Date.now()}_${userId.slice(0, 8)}`;
@@ -546,28 +546,28 @@ export const withdrawToBank: RequestHandler = async (req, res) => {
         res.status(400).json({
           success: false,
           error: "Withdrawal initiation failed",
-        } as ErrorResponse);
+        });
       }
     } catch (transferError: any) {
       console.error("Transfer initiation failed:", transferError);
       res.status(400).json({
         success: false,
         error: transferError.message || "Withdrawal failed",
-      } as ErrorResponse);
+      });
     }
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Withdraw to bank error:", error);
     res.status(500).json({
       success: false,
       error: "Withdrawal failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -579,7 +579,7 @@ export const getTransactionHistory: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const page = parseInt(req.query.page as string) || 1;
@@ -638,6 +638,6 @@ export const getTransactionHistory: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };

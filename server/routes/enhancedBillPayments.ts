@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 import { z } from "zod";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 import {
   getUserWallet,
   updateWallet,
@@ -173,7 +173,7 @@ export const getBillers: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to load billers",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -186,7 +186,7 @@ export const validateCustomer: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Biller code and customer ID are required",
-      } as ErrorResponse);
+      });
     }
 
     // Try Paystack first
@@ -243,7 +243,7 @@ export const validateCustomer: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Customer validation failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -255,7 +255,7 @@ export const buyAirtime: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = airtimeSchema.parse(req.body);
@@ -267,7 +267,7 @@ export const buyAirtime: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Check sufficient balance
@@ -275,7 +275,7 @@ export const buyAirtime: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     const reference = `airtime_${Date.now()}_${userId.slice(0, 8)}`;
@@ -365,28 +365,28 @@ export const buyAirtime: RequestHandler = async (req, res) => {
         res.status(400).json({
           success: false,
           error: "Airtime purchase failed",
-        } as ErrorResponse);
+        });
       }
     } catch (paymentError: any) {
       console.error("Airtime payment error:", paymentError);
       res.status(400).json({
         success: false,
         error: paymentError.message || "Airtime purchase failed",
-      } as ErrorResponse);
+      });
     }
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Buy airtime error:", error);
     res.status(500).json({
       success: false,
       error: "Airtime purchase failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -398,7 +398,7 @@ export const buyDataBundle: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = dataSchema.parse(req.body);
@@ -410,7 +410,7 @@ export const buyDataBundle: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Check sufficient balance
@@ -418,7 +418,7 @@ export const buyDataBundle: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     const reference = `data_${Date.now()}_${userId.slice(0, 8)}`;
@@ -511,28 +511,28 @@ export const buyDataBundle: RequestHandler = async (req, res) => {
         res.status(400).json({
           success: false,
           error: "Data purchase failed",
-        } as ErrorResponse);
+        });
       }
     } catch (paymentError: any) {
       console.error("Data payment error:", paymentError);
       res.status(400).json({
         success: false,
         error: paymentError.message || "Data purchase failed",
-      } as ErrorResponse);
+      });
     }
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Buy data bundle error:", error);
     res.status(500).json({
       success: false,
       error: "Data purchase failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -544,7 +544,7 @@ export const payElectricityBill: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = electricitySchema.parse(req.body);
@@ -556,7 +556,7 @@ export const payElectricityBill: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Check sufficient balance
@@ -564,7 +564,7 @@ export const payElectricityBill: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     const reference = `electricity_${Date.now()}_${userId.slice(0, 8)}`;
@@ -660,28 +660,28 @@ export const payElectricityBill: RequestHandler = async (req, res) => {
         res.status(400).json({
           success: false,
           error: "Electricity bill payment failed",
-        } as ErrorResponse);
+        });
       }
     } catch (paymentError: any) {
       console.error("Electricity payment error:", paymentError);
       res.status(400).json({
         success: false,
         error: paymentError.message || "Electricity bill payment failed",
-      } as ErrorResponse);
+      });
     }
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Pay electricity bill error:", error);
     res.status(500).json({
       success: false,
       error: "Electricity bill payment failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -693,7 +693,7 @@ export const payCableTVBill: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = cableTvSchema.parse(req.body);
@@ -710,7 +710,7 @@ export const payCableTVBill: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Check sufficient balance
@@ -718,7 +718,7 @@ export const payCableTVBill: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     const reference = `cable_${Date.now()}_${userId.slice(0, 8)}`;
@@ -810,27 +810,27 @@ export const payCableTVBill: RequestHandler = async (req, res) => {
         res.status(400).json({
           success: false,
           error: "Cable TV payment failed",
-        } as ErrorResponse);
+        });
       }
     } catch (paymentError: any) {
       console.error("Cable TV payment error:", paymentError);
       res.status(400).json({
         success: false,
         error: paymentError.message || "Cable TV payment failed",
-      } as ErrorResponse);
+      });
     }
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Pay cable TV bill error:", error);
     res.status(500).json({
       success: false,
       error: "Cable TV payment failed",
-    } as ErrorResponse);
+    });
   }
 };

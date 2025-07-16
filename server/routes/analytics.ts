@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 import {
   getUserWallet,
   getUserTransactions,
@@ -16,7 +16,7 @@ export const getUserAnalytics: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const wallet = getUserWallet(userId);
@@ -27,7 +27,7 @@ export const getUserAnalytics: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     // Calculate spending patterns
@@ -72,7 +72,7 @@ export const getUserAnalytics: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -86,7 +86,7 @@ export const getAppAnalytics: RequestHandler = (req, res) => {
       return res.status(403).json({
         success: false,
         error: "Admin access required",
-      } as ErrorResponse);
+      });
     }
 
     const allUsers = getAllUsers();
@@ -132,7 +132,7 @@ export const getAppAnalytics: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 

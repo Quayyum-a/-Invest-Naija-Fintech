@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 
 interface Notification {
   id: string;
@@ -159,7 +159,7 @@ export const getUserNotifications: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const limit = parseInt(req.query.limit as string) || 20;
@@ -185,7 +185,7 @@ export const getUserNotifications: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -196,7 +196,7 @@ export const markNotificationRead: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { notificationId } = req.params;
@@ -207,7 +207,7 @@ export const markNotificationRead: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Notification not found",
-      } as ErrorResponse);
+      });
     }
 
     notification.read = true;
@@ -222,7 +222,7 @@ export const markNotificationRead: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -233,7 +233,7 @@ export const markAllNotificationsRead: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const userNotifications = notifications.get(userId) || [];
@@ -249,7 +249,7 @@ export const markAllNotificationsRead: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -260,7 +260,7 @@ export const deleteNotification: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { notificationId } = req.params;
@@ -274,7 +274,7 @@ export const deleteNotification: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Notification not found",
-      } as ErrorResponse);
+      });
     }
 
     notifications.set(userId, filteredNotifications);
@@ -288,6 +288,6 @@ export const deleteNotification: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };

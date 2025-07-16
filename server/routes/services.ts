@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 import {
   getUserWallet,
   updateWallet,
@@ -31,7 +31,7 @@ export const getServices: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -43,7 +43,7 @@ export const buyAirtime: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { networkId, phoneNumber, amount } = req.body;
@@ -53,7 +53,7 @@ export const buyAirtime: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Network, phone number, and amount are required",
-      } as ErrorResponse);
+      });
     }
 
     // Validate network
@@ -62,7 +62,7 @@ export const buyAirtime: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid network selected",
-      } as ErrorResponse);
+      });
     }
 
     // Validate amount
@@ -73,7 +73,7 @@ export const buyAirtime: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: `Amount must be between ₦${network.airtimeMinMax.min} and ₦${network.airtimeMinMax.max}`,
-      } as ErrorResponse);
+      });
     }
 
     // Validate phone number format
@@ -82,7 +82,7 @@ export const buyAirtime: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid Nigerian phone number format",
-      } as ErrorResponse);
+      });
     }
 
     // Get wallet and check balance
@@ -91,7 +91,7 @@ export const buyAirtime: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     const totalCost = amount + serviceFees.airtime.fee;
@@ -99,7 +99,7 @@ export const buyAirtime: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     // Process airtime purchase (simulate API call)
@@ -141,7 +141,7 @@ export const buyAirtime: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -153,7 +153,7 @@ export const buyData: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { networkId, phoneNumber, planId } = req.body;
@@ -163,7 +163,7 @@ export const buyData: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Network, phone number, and data plan are required",
-      } as ErrorResponse);
+      });
     }
 
     // Validate network and plan
@@ -172,7 +172,7 @@ export const buyData: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid network selected",
-      } as ErrorResponse);
+      });
     }
 
     const dataPlan = network.dataPlans.find((p) => p.id === planId);
@@ -180,7 +180,7 @@ export const buyData: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid data plan selected",
-      } as ErrorResponse);
+      });
     }
 
     // Validate phone number
@@ -189,7 +189,7 @@ export const buyData: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid Nigerian phone number format",
-      } as ErrorResponse);
+      });
     }
 
     // Get wallet and check balance
@@ -198,7 +198,7 @@ export const buyData: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     const totalCost = dataPlan.price + serviceFees.data.fee;
@@ -206,7 +206,7 @@ export const buyData: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     // Process data purchase
@@ -243,7 +243,7 @@ export const buyData: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -255,7 +255,7 @@ export const payBill: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { providerId, amount, fields } = req.body;
@@ -265,7 +265,7 @@ export const payBill: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Provider, amount, and required fields are needed",
-      } as ErrorResponse);
+      });
     }
 
     // Validate provider
@@ -274,7 +274,7 @@ export const payBill: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid bill provider",
-      } as ErrorResponse);
+      });
     }
 
     // Validate amount limits
@@ -282,14 +282,14 @@ export const payBill: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: `Minimum amount is ₦${provider.minAmount}`,
-      } as ErrorResponse);
+      });
     }
 
     if (provider.maxAmount && amount > provider.maxAmount) {
       return res.status(400).json({
         success: false,
         error: `Maximum amount is ₦${provider.maxAmount}`,
-      } as ErrorResponse);
+      });
     }
 
     // Validate required fields
@@ -298,7 +298,7 @@ export const payBill: RequestHandler = (req, res) => {
         return res.status(400).json({
           success: false,
           error: `${field.label} is required`,
-        } as ErrorResponse);
+        });
       }
     }
 
@@ -308,7 +308,7 @@ export const payBill: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     const serviceFee =
@@ -320,7 +320,7 @@ export const payBill: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     // Process bill payment
@@ -355,7 +355,7 @@ export const payBill: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -367,7 +367,7 @@ export const bankTransfer: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { bankCode, accountNumber, accountName, amount, narration } =
@@ -378,7 +378,7 @@ export const bankTransfer: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Bank, account details, and amount are required",
-      } as ErrorResponse);
+      });
     }
 
     // Validate bank
@@ -387,7 +387,7 @@ export const bankTransfer: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid bank selected",
-      } as ErrorResponse);
+      });
     }
 
     // Validate amount limits
@@ -395,14 +395,14 @@ export const bankTransfer: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Minimum transfer amount is ₦100",
-      } as ErrorResponse);
+      });
     }
 
     if (amount > bank.maxDailyLimit) {
       return res.status(400).json({
         success: false,
         error: `Maximum daily limit for ${bank.name} is ₦${bank.maxDailyLimit.toLocaleString()}`,
-      } as ErrorResponse);
+      });
     }
 
     // Validate account number format
@@ -410,7 +410,7 @@ export const bankTransfer: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Account number must be 10 digits",
-      } as ErrorResponse);
+      });
     }
 
     // Get wallet and check balance
@@ -419,7 +419,7 @@ export const bankTransfer: RequestHandler = (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     const totalCost = amount + bank.transferFee;
@@ -427,7 +427,7 @@ export const bankTransfer: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Insufficient wallet balance",
-      } as ErrorResponse);
+      });
     }
 
     // Process transfer
@@ -482,7 +482,7 @@ export const bankTransfer: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -495,7 +495,7 @@ export const verifyAccount: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Bank code and account number are required",
-      } as ErrorResponse);
+      });
     }
 
     // Validate bank
@@ -504,7 +504,7 @@ export const verifyAccount: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid bank code",
-      } as ErrorResponse);
+      });
     }
 
     // Validate account number format
@@ -512,7 +512,7 @@ export const verifyAccount: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Account number must be 10 digits",
-      } as ErrorResponse);
+      });
     }
 
     // Simulate account verification (in real app, call bank verification API)
@@ -541,6 +541,6 @@ export const verifyAccount: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };

@@ -1,4 +1,4 @@
-import { User, UserWallet, Transaction, Investment } from "@shared/api";
+// import { User, UserWallet, Transaction, Investment } from "@shared/api";
 import { randomUUID } from "crypto";
 import Database from "better-sqlite3";
 import path from "path";
@@ -242,7 +242,7 @@ export const createUser = (userData: {
   firstName: string;
   lastName: string;
   role?: "user" | "admin" | "super_admin";
-}): User => {
+}) => {
   const userId = randomUUID();
   const now = new Date().toISOString();
 
@@ -255,7 +255,7 @@ export const createUser = (userData: {
         ? "admin"
         : "user");
 
-  const user: User = {
+  const user = {
     id: userId,
     email: userData.email,
     phone: userData.phone,
@@ -299,12 +299,12 @@ export const createUser = (userData: {
 
 export const getUserByEmail = (
   email: string,
-): (User & { password: string }) | null => {
+): (any & { password: string }) | null => {
   const stmt = db.prepare("SELECT * FROM users WHERE email = ?");
   return (stmt.get(email) as any) || null;
 };
 
-export const getUserById = (userId: string): User | null => {
+export const getUserById = (userId: string): any | null => {
   const stmt = db.prepare("SELECT * FROM users WHERE id = ?");
   const row = stmt.get(userId) as any;
   if (!row) return null;
@@ -314,8 +314,8 @@ export const getUserById = (userId: string): User | null => {
 
 export const updateUser = (
   userId: string,
-  updates: Partial<User>,
-): User | null => {
+  updates: Partial<any>,
+): any | null => {
   const current = getUserById(userId);
   if (!current) return null;
 
@@ -355,7 +355,7 @@ export const createSession = (userId: string): string => {
   return token;
 };
 
-export const getSessionUser = (token: string): User | null => {
+export const getSessionUser = (token: string): any | null => {
   const stmt = db.prepare("SELECT userId FROM user_sessions WHERE token = ?");
   const session = stmt.get(token) as any;
   return session ? getUserById(session.userId) : null;
@@ -367,15 +367,15 @@ export const deleteSession = (token: string): boolean => {
 };
 
 // Wallet Management
-export const getUserWallet = (userId: string): UserWallet | null => {
+export const getUserWallet = (userId: string): any | null => {
   const stmt = db.prepare("SELECT * FROM wallets WHERE userId = ?");
   return (stmt.get(userId) as any) || null;
 };
 
 export const updateWallet = (
   userId: string,
-  updates: Partial<Omit<UserWallet, "userId">>,
-): UserWallet | null => {
+  updates: Partial<Omit<any, "userId">>,
+): any | null => {
   const current = getUserWallet(userId);
   if (!current) return null;
 
@@ -399,11 +399,11 @@ export const updateWallet = (
 
 // Transaction Management
 export const createTransaction = (
-  transactionData: Omit<Transaction, "id" | "createdAt">,
-): Transaction => {
+  transactionData: Omit<any, "id" | "createdAt">,
+): any => {
   const transactionId = randomUUID();
   const now = new Date().toISOString();
-  const transaction: Transaction = {
+  const transaction = {
     ...transactionData,
     id: transactionId,
     createdAt: now,
@@ -430,7 +430,7 @@ export const createTransaction = (
 export const getUserTransactions = (
   userId: string,
   limit: number = 50,
-): Transaction[] => {
+): any[] => {
   const stmt = db.prepare(
     "SELECT * FROM transactions WHERE userId = ? ORDER BY createdAt DESC LIMIT ?",
   );
@@ -441,7 +441,7 @@ export const getUserTransactions = (
   }));
 };
 
-export const getTransaction = (transactionId: string): Transaction | null => {
+export const getTransaction = (transactionId: string): any | null => {
   const stmt = db.prepare("SELECT * FROM transactions WHERE id = ?");
   const row = stmt.get(transactionId) as any;
   return row
@@ -451,8 +451,8 @@ export const getTransaction = (transactionId: string): Transaction | null => {
 
 export const updateTransaction = (
   transactionId: string,
-  updates: Partial<Transaction>,
-): Transaction | null => {
+  updates: Partial<any>,
+): any | null => {
   const current = getTransaction(transactionId);
   if (!current) return null;
 
@@ -474,13 +474,13 @@ export const updateTransaction = (
 // Investment Management
 export const createInvestment = (
   investmentData: Omit<
-    Investment,
+    any,
     "id" | "createdAt" | "currentValue" | "returns"
   >,
-): Investment => {
+): any => {
   const investmentId = randomUUID();
   const now = new Date().toISOString();
-  const investment: Investment = {
+  const investment = {
     ...investmentData,
     id: investmentId,
     currentValue: investmentData.amount,
@@ -506,7 +506,7 @@ export const createInvestment = (
   return investment;
 };
 
-export const getUserInvestments = (userId: string): Investment[] => {
+export const getUserInvestments = (userId: string): any[] => {
   const stmt = db.prepare(
     "SELECT * FROM investments WHERE userId = ? ORDER BY createdAt DESC",
   );
@@ -515,8 +515,8 @@ export const getUserInvestments = (userId: string): Investment[] => {
 
 export const updateInvestment = (
   investmentId: string,
-  updates: Partial<Investment>,
-): Investment | null => {
+  updates: Partial<any>,
+): any | null => {
   const stmt = db.prepare("SELECT * FROM investments WHERE id = ?");
   const current = stmt.get(investmentId) as any;
   if (!current) return null;
@@ -537,7 +537,7 @@ export const updateInvestment = (
 };
 
 // Utility Functions
-export const getAllUsers = (): User[] => {
+export const getAllUsers = (): any[] => {
   const stmt = db.prepare("SELECT * FROM users");
   const rows = stmt.all() as any[];
   return rows.map(({ password, ...user }) => user);

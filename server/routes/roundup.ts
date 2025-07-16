@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 import {
   getUserWallet,
   updateWallet,
@@ -28,7 +28,7 @@ export const getRoundupSettings: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const settings = roundupSettings.get(userId) || {
@@ -48,7 +48,7 @@ export const getRoundupSettings: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -60,7 +60,7 @@ export const updateRoundupSettings: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const {
@@ -79,7 +79,7 @@ export const updateRoundupSettings: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid roundup method",
-      } as ErrorResponse);
+      });
     }
 
     if (
@@ -89,7 +89,7 @@ export const updateRoundupSettings: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid investment type",
-      } as ErrorResponse);
+      });
     }
 
     if (
@@ -99,7 +99,7 @@ export const updateRoundupSettings: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Auto-invest threshold must be between ₦100 and ₦50,000",
-      } as ErrorResponse);
+      });
     }
 
     const currentSettings = roundupSettings.get(userId) || {};
@@ -124,7 +124,7 @@ export const updateRoundupSettings: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -150,7 +150,7 @@ export const processRoundup: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { transactionAmount, description = "Purchase" } = req.body;
@@ -159,7 +159,7 @@ export const processRoundup: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid transaction amount",
-      } as ErrorResponse);
+      });
     }
 
     // Get user's round-up settings
@@ -197,14 +197,14 @@ export const processRoundup: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Wallet not found",
-      } as ErrorResponse);
+      });
     }
 
     if (wallet.balance < roundupAmount) {
       return res.status(400).json({
         success: false,
         error: "Insufficient balance for round-up",
-      } as ErrorResponse);
+      });
     }
 
     // Create round-up transaction
@@ -279,7 +279,7 @@ export const processRoundup: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -291,7 +291,7 @@ export const getRoundupStats: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     // In production, calculate these from actual transaction data
@@ -314,7 +314,7 @@ export const getRoundupStats: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -326,7 +326,7 @@ export const investRoundups: RequestHandler = (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const { investmentType = "money_market" } = req.body;
@@ -338,7 +338,7 @@ export const investRoundups: RequestHandler = (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Minimum round-up investment is ₦100",
-      } as ErrorResponse);
+      });
     }
 
     // Create investment
@@ -381,6 +381,6 @@ export const investRoundups: RequestHandler = (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { getSessionUser, getUserById } from "../data/storage";
-import { User } from "@shared/api";
+// import { User } from "@shared/api";
 import { env } from "../config/env";
 
 // Extend Express Request type to include user

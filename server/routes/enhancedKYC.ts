@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 import { z } from "zod";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 import { updateUser, getUser, createTransaction } from "../data/storage";
 import { youVerifyService } from "../services/youverifyService";
 import { termiiService } from "../services/termiiService";
@@ -43,7 +43,7 @@ export const getKYCStatus: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const user = getUser({ id: userId });
@@ -51,7 +51,7 @@ export const getKYCStatus: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "User not found",
-      } as ErrorResponse);
+      });
     }
 
     // Calculate KYC completion percentage
@@ -136,7 +136,7 @@ export const getKYCStatus: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to get KYC status",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -148,7 +148,7 @@ export const verifyBVN: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = bvnVerificationSchema.parse(req.body);
@@ -159,7 +159,7 @@ export const verifyBVN: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "BVN already verified for this account",
-      } as ErrorResponse);
+      });
     }
 
     try {
@@ -237,28 +237,28 @@ export const verifyBVN: RequestHandler = async (req, res) => {
         res.status(400).json({
           success: false,
           error: verification.message || "BVN verification failed",
-        } as ErrorResponse);
+        });
       }
     } catch (verificationError: any) {
       console.error("BVN verification error:", verificationError);
       res.status(400).json({
         success: false,
         error: verificationError.message || "BVN verification failed",
-      } as ErrorResponse);
+      });
     }
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Verify BVN error:", error);
     res.status(500).json({
       success: false,
       error: "BVN verification failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -270,7 +270,7 @@ export const verifyNIN: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = ninVerificationSchema.parse(req.body);
@@ -281,7 +281,7 @@ export const verifyNIN: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "NIN already verified for this account",
-      } as ErrorResponse);
+      });
     }
 
     try {
@@ -361,28 +361,28 @@ export const verifyNIN: RequestHandler = async (req, res) => {
         res.status(400).json({
           success: false,
           error: verification.message || "NIN verification failed",
-        } as ErrorResponse);
+        });
       }
     } catch (verificationError: any) {
       console.error("NIN verification error:", verificationError);
       res.status(400).json({
         success: false,
         error: verificationError.message || "NIN verification failed",
-      } as ErrorResponse);
+      });
     }
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Verify NIN error:", error);
     res.status(500).json({
       success: false,
       error: "NIN verification failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -394,7 +394,7 @@ export const uploadKYCDocuments: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     const validatedData = kycDocumentSchema.parse(req.body);
@@ -406,7 +406,7 @@ export const uploadKYCDocuments: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Please verify your BVN and NIN before uploading documents",
-      } as ErrorResponse);
+      });
     }
 
     // Check if documents are already verified
@@ -414,7 +414,7 @@ export const uploadKYCDocuments: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Documents already verified for this account",
-      } as ErrorResponse);
+      });
     }
 
     try {
@@ -510,21 +510,21 @@ export const uploadKYCDocuments: RequestHandler = async (req, res) => {
         success: false,
         error:
           "Document verification failed. Please try uploading clearer images.",
-      } as ErrorResponse);
+      });
     }
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
         error: error.errors[0].message,
-      } as ErrorResponse);
+      });
     }
 
     console.error("Upload KYC documents error:", error);
     res.status(500).json({
       success: false,
       error: "Document upload failed",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -536,7 +536,7 @@ export const retryKYCVerification: RequestHandler = async (req, res) => {
       return res.status(401).json({
         success: false,
         error: "User not authenticated",
-      } as ErrorResponse);
+      });
     }
 
     // Check if KYC is rejected
@@ -544,7 +544,7 @@ export const retryKYCVerification: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "KYC retry is only available for rejected applications",
-      } as ErrorResponse);
+      });
     }
 
     // Reset KYC status to pending
@@ -587,7 +587,7 @@ export const retryKYCVerification: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to retry KYC verification",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -665,6 +665,6 @@ export const getKYCRequirements: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to get KYC requirements",
-    } as ErrorResponse);
+    });
   }
 };

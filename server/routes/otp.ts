@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { ErrorResponse } from "@shared/api";
+// import { ErrorResponse } from "@shared/api";
 
 // In-memory OTP storage (use Redis in production)
 const otpStorage = new Map<
@@ -86,7 +86,7 @@ export const sendOTP: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Phone number or email is required",
-      } as ErrorResponse);
+      });
     }
 
     // Validate Nigerian phone number if provided
@@ -96,7 +96,7 @@ export const sendOTP: RequestHandler = async (req, res) => {
         return res.status(400).json({
           success: false,
           error: "Invalid Nigerian phone number format",
-        } as ErrorResponse);
+        });
       }
     }
 
@@ -115,7 +115,7 @@ export const sendOTP: RequestHandler = async (req, res) => {
         return res.status(429).json({
           success: false,
           error: "Too many OTP requests. Please try again in 1 hour.",
-        } as ErrorResponse);
+        });
       }
     }
 
@@ -142,7 +142,7 @@ export const sendOTP: RequestHandler = async (req, res) => {
       return res.status(500).json({
         success: false,
         error: "Failed to send verification code. Please try again.",
-      } as ErrorResponse);
+      });
     }
 
     res.json({
@@ -155,7 +155,7 @@ export const sendOTP: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -167,14 +167,14 @@ export const verifyOTP: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Verification code is required",
-      } as ErrorResponse);
+      });
     }
 
     if (!phoneNumber && !email) {
       return res.status(400).json({
         success: false,
         error: "Phone number or email is required",
-      } as ErrorResponse);
+      });
     }
 
     const identifier = phoneNumber || email;
@@ -184,7 +184,7 @@ export const verifyOTP: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "No verification code found. Please request a new one.",
-      } as ErrorResponse);
+      });
     }
 
     // Check if OTP has expired
@@ -193,7 +193,7 @@ export const verifyOTP: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Verification code has expired. Please request a new one.",
-      } as ErrorResponse);
+      });
     }
 
     // Check if OTP is correct
@@ -201,7 +201,7 @@ export const verifyOTP: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid verification code. Please check and try again.",
-      } as ErrorResponse);
+      });
     }
 
     // Mark as verified
@@ -218,7 +218,7 @@ export const verifyOTP: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
@@ -230,7 +230,7 @@ export const checkOTPStatus: RequestHandler = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Phone number or email is required",
-      } as ErrorResponse);
+      });
     }
 
     const identifier = (phoneNumber || email) as string;
@@ -258,7 +258,7 @@ export const checkOTPStatus: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
-    } as ErrorResponse);
+    });
   }
 };
 
