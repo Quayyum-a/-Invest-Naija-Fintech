@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ["mongoose"],
-  },
+  serverExternalPackages: ["mongoose"],
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -22,6 +20,6 @@ const nextConfig = {
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
