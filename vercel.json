@@ -1,11 +1,26 @@
 {
-  "functions": {
-    "app/api/**/*.ts": {
-      "maxDuration": 30
+  "version": 2,
+  "builds": [
+    {
+      "src": "client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "client/dist"
+      }
     }
-  },
-  "env": {
-    "MONGODB_URI": "@mongodb-uri",
-    "JWT_SECRET": "@jwt-secret"
-  }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/client/dist/index.html"
+    }
+  ],
+  "outputDirectory": "client/dist",
+  "buildCommand": "cd client && npm run build",
+  "installCommand": "npm install && cd client && npm install",
+  "framework": "vite"
 }
