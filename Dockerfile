@@ -1,5 +1,5 @@
 # Multi-stage Docker build for InvestNaija
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Set working directory
 WORKDIR /app
@@ -24,7 +24,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 # Create app user for security
 RUN addgroup -g 1001 -S nodejs
