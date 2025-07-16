@@ -1,0 +1,14 @@
+node_modules
+.git
+dist/server
+data/investnaija.db
+*.log
+.env
+.env.local
+mobile
+docs
+scripts
+server/tests
+README.md
+DEPLOYMENT.md
+IMPLEMENTATION_*.md
