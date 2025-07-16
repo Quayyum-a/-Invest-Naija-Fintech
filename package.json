@@ -27,7 +27,7 @@
     "dotenv": "latest",
     "express": "latest",
     "express-rate-limit": "latest",
-    "framer-motion": "^10.16.16",
+    "framer-motion": "^12.18.1",
     "helmet": "latest",
     "jiti": "latest",
     "jsonwebtoken": "latest",
