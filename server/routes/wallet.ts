@@ -6,7 +6,7 @@ import {
   DashboardData,
   PortfolioData,
   ErrorResponse,
-} from "@shared/api";
+} from "../../shared/api";
 import {
   getUserWallet,
   updateWallet,

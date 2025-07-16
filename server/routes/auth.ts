@@ -5,7 +5,7 @@ import {
   LoginRequest,
   AuthResponse,
   ErrorResponse,
-} from "@shared/api";
+} from "../../shared/api";
 import {
   createUser,
   getUserByEmail,

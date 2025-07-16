@@ -27,6 +27,7 @@
     "@types/cors": "^2.8.17",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/nodemailer": "^6.4.14",
-    "@types/better-sqlite3": "^7.6.6"
+    "@types/better-sqlite3": "^7.6.6",
+    "@types/bcryptjs": "^2.4.2"
   }
 }

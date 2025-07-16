@@ -5,6 +5,39 @@ import {
   updateInvestment,
 } from "../data/storage";
 
+export interface InvestmentProduct {
+  id: string;
+  name: string;
+  description: string;
+  minimumAmount: number;
+  expectedReturn: number;
+  riskLevel: string;
+  duration: string;
+  status: string;
+  features: string[];
+  provider: string;
+  category: string;
+}
+
+export interface UserInvestment {
+  id: string;
+  userId: string;
+  type: string;
+  amount: number;
+  currentValue: number;
+  returns: number;
+  createdAt: string;
+  status: string;
+}
+
+export interface PortfolioSummary {
+  totalInvested: number;
+  currentValue: number;
+  totalReturns: number;
+  returnPercentage: number;
+  activeInvestments: number;
+}
+
 // Real Nigerian investment products
 export class InvestmentService {
   // Get available investment products from Nigerian market

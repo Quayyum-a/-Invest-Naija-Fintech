@@ -1,5 +1,5 @@
 import { getUserByEmail, getUserById } from "./storage";
-// import { User } from "@shared/api";
+import type { User } from "../../shared/api";
 
 // Enhanced user lookup functions for production use
 export const getUserByPhone = (phone: string): User | null => {

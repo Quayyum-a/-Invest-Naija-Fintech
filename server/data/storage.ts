@@ -473,10 +473,7 @@ export const updateTransaction = (
 
 // Investment Management
 export const createInvestment = (
-  investmentData: Omit<
-    any,
-    "id" | "createdAt" | "currentValue" | "returns"
-  >,
+  investmentData: Omit<any, "id" | "createdAt" | "currentValue" | "returns">,
 ): any => {
   const investmentId = randomUUID();
   const now = new Date().toISOString();
@@ -882,4 +879,10 @@ export const createSampleChallenges = () => {
   });
 
   console.log("✅ Sample financial challenges created");
+};
+
+export const getUser = (userId: string): any | null => {
+  const stmt = db.prepare("SELECT * FROM users WHERE id = ?");
+  const user = stmt.get(userId);
+  return user || null;
 };

@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-// import { ErrorResponse } from "@shared/api";
+import type { ErrorResponse } from "../../shared/api";
 import {
   getUserWallet,
   updateWallet,
