@@ -15,11 +15,8 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/((?!api).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
