@@ -7,14 +7,11 @@ export default defineConfig({
   build: {
     outDir: "dist/spa",
     sourcemap: false,
-    minify: "terser",
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ["react", "react-dom"],
           router: ["react-router-dom"],
-          ui: ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu"],
-          charts: ["recharts"],
         },
       },
     },
