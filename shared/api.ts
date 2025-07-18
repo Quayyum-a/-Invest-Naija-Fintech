@@ -62,7 +62,10 @@ export interface Transaction {
     | "airtime"
     | "data_bundle"
     | "cable_tv"
-    | "transfer";
+    | "transfer"
+    | "transfer_in"
+    | "transfer_out"
+    | "bank_withdrawal";
   amount: number;
   description: string;
   status: "pending" | "completed" | "failed";
