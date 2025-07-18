@@ -20,6 +20,7 @@ export interface User {
   phone: string;
   firstName: string;
   lastName: string;
+  password?: string; // Optional - only for internal use, never sent to client
   bvn?: string;
   nin?: string;
   kycStatus: "pending" | "verified" | "rejected";
