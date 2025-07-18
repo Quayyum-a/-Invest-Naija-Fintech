@@ -47,6 +47,43 @@ export interface Investment {
   returns: number;
   createdAt: string;
   status: "active" | "matured" | "withdrawn";
+  metadata?: Record<string, any>;
+}
+
+export interface InvestmentProduct {
+  id: string;
+  name: string;
+  type: "money_market" | "treasury_bills" | "fixed_deposit";
+  minAmount: number;
+  maxAmount?: number;
+  interestRate: number;
+  duration: number; // in days
+  description: string;
+  riskLevel: "low" | "medium" | "high";
+  active: boolean;
+}
+
+export interface UserInvestment extends Investment {
+  product?: InvestmentProduct;
+  maturityDate?: string;
+}
+
+export interface PortfolioSummary {
+  totalInvestments: number;
+  totalReturns: number;
+  totalValue: number;
+  performance: {
+    daily: number;
+    weekly: number;
+    monthly: number;
+    yearly: number;
+  };
+  breakdown: {
+    [key: string]: {
+      amount: number;
+      percentage: number;
+    };
+  };
 }
 
 export interface Transaction {
