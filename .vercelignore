@@ -9,6 +9,10 @@ mobile
 docs
 scripts
 server/tests
+server/data/storage.ts
+server/database/connection.ts
 README.md
 DEPLOYMENT.md
 IMPLEMENTATION_*.md
+*.sqlite
+*.db
