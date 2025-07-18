@@ -1,30 +1,22 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.ts",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "dist/spa/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/((?!api).*)",
-      "dest": "/dist/spa/$1"
-    }
-  ],
   "buildCommand": "npm run build:client",
   "outputDirectory": "dist/spa",
   "installCommand": "npm install",
   "framework": null,
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }

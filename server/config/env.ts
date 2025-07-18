@@ -21,10 +21,19 @@ const envSchema = z.object({
   // Database
   DATABASE_URL: z.string().url().optional(),
 
-  // Paystack Integration
+  // Payment Integration
   PAYSTACK_PUBLIC_KEY: z.string().startsWith("pk_").optional(),
   PAYSTACK_SECRET_KEY: z.string().startsWith("sk_").optional(),
   PAYSTACK_WEBHOOK_SECRET: z.string().optional(),
+
+  // Flutterwave Integration
+  FLUTTERWAVE_PUBLIC_KEY: z.string().optional(),
+  FLUTTERWAVE_SECRET_KEY: z.string().optional(),
+
+  // Application URLs
+  FRONTEND_URL: z.string().url().optional(),
+  APP_URL: z.string().url().optional(),
+  CORS_ORIGIN: z.string().optional(),
 
   // KYC Verification (VerifyMe)
   VERIFYME_API_KEY: z.string().optional(),
@@ -83,6 +92,11 @@ const loadEnv = (): Env => {
       PAYSTACK_PUBLIC_KEY: process.env.PAYSTACK_PUBLIC_KEY,
       PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
       PAYSTACK_WEBHOOK_SECRET: process.env.PAYSTACK_WEBHOOK_SECRET,
+      FLUTTERWAVE_PUBLIC_KEY: process.env.FLUTTERWAVE_PUBLIC_KEY,
+      FLUTTERWAVE_SECRET_KEY: process.env.FLUTTERWAVE_SECRET_KEY,
+      FRONTEND_URL: process.env.FRONTEND_URL,
+      APP_URL: process.env.APP_URL,
+      CORS_ORIGIN: process.env.CORS_ORIGIN,
       VERIFYME_API_KEY: process.env.VERIFYME_API_KEY,
       VERIFYME_BASE_URL:
         process.env.VERIFYME_BASE_URL || "https://api.verifyme.ng",
