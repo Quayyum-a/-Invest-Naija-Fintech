@@ -18,7 +18,7 @@
     "build:server": "vite build --config vite.config.server.ts",
     "build:vercel": "npm run typecheck && npm run build:client",
     "start": "node dist/server/node-build.mjs",
-    "vercel-build": "NODE_ENV=production vite build --mode production",
+    "vercel-build": "vite build --config vite.config.production.ts",
     "test": "vitest --run",
     "test:jest": "jest --config server/jest.config.js",
     "test:watch": "jest --config server/jest.config.js --watch",
