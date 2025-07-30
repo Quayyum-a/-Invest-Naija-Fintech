@@ -6,7 +6,10 @@ import fs from "fs";
 
 // Initialize SQLite database
 const ensureDataDir = () => {
-  const dataDir = path.join(process.cwd(), "data");
+  // In serverless environments like Netlify, use /tmp for temporary storage
+  const isServerless = process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+  const dataDir = isServerless ? '/tmp' : path.join(process.cwd(), "data");
+  
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
@@ -18,6 +21,7 @@ const initDB = () => {
   const dbPath = path.join(dataDir, "investnaija.db");
 
   console.log("🗄️  Initializing SQLite database at:", dbPath);
+  console.log("🌐 Environment:", process.env.NETLIFY ? 'Netlify' : 'Local');
 
   const db = new Database(dbPath);
   db.pragma("foreign_keys = ON");

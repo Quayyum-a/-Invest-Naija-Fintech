@@ -206,10 +206,29 @@ export function createServer() {
   // Basic middleware
   app.use(
     cors({
-      origin:
-        env.NODE_ENV === "production"
-          ? ["https://investnaija.com", "https://www.investnaija.com"]
-          : true,
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        
+        // In development, allow all origins
+        if (env.NODE_ENV !== "production") {
+          return callback(null, true);
+        }
+        
+        // In production, check allowed origins
+        const allowedOrigins = [
+          "https://investnaij.netlify.app",
+          "https://www.investnaij.netlify.app",
+          env.CORS_ORIGIN
+        ].filter(Boolean);
+        
+        // Allow any netlify.app subdomain or if origin is in allowed list
+        if (origin.includes('.netlify.app') || allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        
+        callback(new Error('Not allowed by CORS'));
+      },
       credentials: true,
     }),
   );

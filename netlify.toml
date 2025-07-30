@@ -3,9 +3,11 @@
   functions = "netlify/functions"
   publish = "dist/spa"
 
+[build.environment]
+  NODE_ENV = "production"
 
 [functions]
-  external_node_modules = ["express"]
+  external_node_modules = ["express", "bcryptjs", "jsonwebtoken", "better-sqlite3", "cors"]
   node_bundler = "esbuild"
   
 [[redirects]]
