@@ -184,7 +184,6 @@ import {
 
 // Database viewer routes removed for MVP to simplify dependencies
 
-import NotificationService from "./services/notificationService";
 
 export function createServer() {
   // Log configuration on startup
