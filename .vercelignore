@@ -1,18 +1,19 @@
-node_modules
+# Exclude VCS and local env
 .git
-dist/server
-data/investnaija.db
-*.log
 .env
 .env.local
+
+# Dependencies
+node_modules
+
+# Logs
+*.log
+
+# Optional: exclude non-critical assets
 mobile
 docs
 scripts
 server/tests
-server/data/storage.ts
-server/database/connection.ts
-README.md
-DEPLOYMENT.md
-IMPLEMENTATION_*.md
-*.sqlite
-*.db
+
+# Do NOT exclude server source files required by functions
+# Keep all server/** and api/** included
