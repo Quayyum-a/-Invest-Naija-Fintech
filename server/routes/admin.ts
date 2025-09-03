@@ -1,13 +1,13 @@
 import { RequestHandler } from "express";
 import { ErrorResponse } from "@shared/api";
 import {
-  getAllUsers,
-  getUserCount,
-  getTotalAUM,
-  getActiveInvestmentCount,
-  getPendingKYCCount,
-  updateUser,
-  getUserById,
+  getAllUsersAsync as getAllUsers,
+  getUserCountAsync as getUserCount,
+  getTotalAUMAsync as getTotalAUM,
+  getActiveInvestmentCountAsync as getActiveInvestmentCount,
+  getPendingKYCCountAsync as getPendingKYCCount,
+  updateUserAsync as updateUser,
+  getUserByIdAsync as getUserById,
 } from "../data/storage";
 
 // Role-based access control
@@ -101,7 +101,7 @@ export const getAdminStats: RequestHandler = async (req, res) => {
   }
 };
 
-export const getAllUsersAdmin: RequestHandler = (req, res) => {
+export const getAllUsersAdmin: RequestHandler = async (req, res) => {
   try {
     if (!req.user || !isAdmin(req)) {
       return res.status(403).json({
@@ -110,7 +110,7 @@ export const getAllUsersAdmin: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const users = getAllUsers();
+    const users = await getAllUsers();
     const search = req.query.search as string;
 
     let filteredUsers = users;
@@ -137,7 +137,7 @@ export const getAllUsersAdmin: RequestHandler = (req, res) => {
   }
 };
 
-export const updateUserKYC: RequestHandler = (req, res) => {
+export const updateUserKYC: RequestHandler = async (req, res) => {
   try {
     if (!req.user || !isAdmin(req)) {
       return res.status(403).json({
@@ -156,7 +156,7 @@ export const updateUserKYC: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const updatedUser = updateUser(userId, { kycStatus });
+    const updatedUser = await updateUser(userId, { kycStatus });
     if (!updatedUser) {
       return res.status(404).json({
         success: false,
@@ -178,7 +178,7 @@ export const updateUserKYC: RequestHandler = (req, res) => {
   }
 };
 
-export const updateUserStatus: RequestHandler = (req, res) => {
+export const updateUserStatus: RequestHandler = async (req, res) => {
   try {
     if (!req.user || !hasPermission(req, "manage_admins")) {
       return res.status(403).json({
@@ -197,7 +197,7 @@ export const updateUserStatus: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const updatedUser = updateUser(userId, { status });
+    const updatedUser = await updateUser(userId, { status });
     if (!updatedUser) {
       return res.status(404).json({
         success: false,
@@ -219,7 +219,7 @@ export const updateUserStatus: RequestHandler = (req, res) => {
   }
 };
 
-export const getUserDetails: RequestHandler = (req, res) => {
+export const getUserDetails: RequestHandler = async (req, res) => {
   try {
     if (!req.user || !isAdmin(req)) {
       return res.status(403).json({
@@ -229,7 +229,7 @@ export const getUserDetails: RequestHandler = (req, res) => {
     }
 
     const { userId } = req.params;
-    const user = getUserById(userId);
+    const user = await getUserById(userId);
 
     if (!user) {
       return res.status(404).json({

@@ -7,11 +7,11 @@ import {
   ErrorResponse,
 } from "@shared/api";
 import {
-  createUser,
-  getUserByEmail,
-  createSession,
-  deleteSession,
-  getSessionUser,
+  createUserAsync as createUser,
+  getUserByEmailAsync as getUserByEmail,
+  createSessionAsync as createSession,
+  deleteSessionAsync as deleteSession,
+  getSessionUserAsync as getSessionUser,
 } from "../data/storage";
 import {
   registerSchema,
@@ -39,7 +39,7 @@ export const register: RequestHandler = async (req, res) => {
       req.body;
 
     // Check if user already exists
-    const existingUser = getUserByEmail(email);
+    const existingUser = await getUserByEmail(email);
     if (existingUser) {
       return res.status(409).json({
         success: false,
@@ -49,7 +49,7 @@ export const register: RequestHandler = async (req, res) => {
 
     // Create user
     const hashedPassword = await hashPassword(password);
-    const user = createUser({
+    const user = await createUser({
       email,
       password: hashedPassword,
       phone,
@@ -59,7 +59,7 @@ export const register: RequestHandler = async (req, res) => {
 
     // Create JWT token and session
     const jwtToken = generateJWT(user.id);
-    const sessionToken = createSession(user.id);
+    const sessionToken = await createSession(user.id);
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
@@ -85,7 +85,7 @@ export const login: RequestHandler = async (req, res) => {
     const { email, password }: LoginRequest = req.body;
 
     // Find user
-    const user = getUserByEmail(email);
+    const user = await getUserByEmail(email);
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -112,7 +112,7 @@ export const login: RequestHandler = async (req, res) => {
 
     // Create JWT token and session
     const jwtToken = generateJWT(user.id);
-    const sessionToken = createSession(user.id);
+    const sessionToken = await createSession(user.id);
     const { password: _, ...userWithoutPassword } = user;
 
     res.json({
@@ -131,13 +131,13 @@ export const login: RequestHandler = async (req, res) => {
   }
 };
 
-export const logout: RequestHandler = (req, res) => {
+export const logout: RequestHandler = async (req, res) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
 
     if (token) {
-      deleteSession(token);
+      await deleteSession(token);
     }
 
     res.json({
@@ -153,7 +153,7 @@ export const logout: RequestHandler = (req, res) => {
   }
 };
 
-export const getCurrentUser: RequestHandler = (req, res) => {
+export const getCurrentUser: RequestHandler = async (req, res) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
@@ -165,7 +165,7 @@ export const getCurrentUser: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const user = getSessionUser(token);
+    const user = await getSessionUser(token);
     if (!user) {
       return res.status(401).json({
         success: false,

@@ -1,8 +1,7 @@
-import { RequestHandler } from "express";
 import { ErrorResponse } from "@shared/api";
-import { updateUser, getUserById } from "../data/storage";
+import { updateUserAsync as updateUser, getUserByIdAsync as getUserById } from "../data/storage";
 
-export const submitKYCDocuments: RequestHandler = (req, res) => {
+export const submitKYCDocuments: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -41,7 +40,7 @@ export const submitKYCDocuments: RequestHandler = (req, res) => {
     }
 
     // Update user with KYC information
-    const updatedUser = updateUser(userId, {
+    const updatedUser = await updateUser(userId, {
       bvn: bvn || undefined,
       nin: nin || undefined,
       kycStatus: "pending", // Will be reviewed by admin
@@ -69,7 +68,7 @@ export const submitKYCDocuments: RequestHandler = (req, res) => {
   }
 };
 
-export const getKYCStatus: RequestHandler = (req, res) => {
+export const getKYCStatus: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -79,7 +78,7 @@ export const getKYCStatus: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const user = getUserById(userId);
+    const user = await getUserById(userId);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -94,7 +93,7 @@ export const getKYCStatus: RequestHandler = (req, res) => {
         bvnProvided: !!user.bvn,
         ninProvided: !!user.nin,
         canInvest: user.kycStatus === "verified",
-        maxInvestmentLimit: user.kycStatus === "verified" ? 1000000 : 50000, // ₦50k limit for unverified users
+        maxInvestmentLimit: user.kycStatus === "verified" ? 1000000 : 50000,
       },
     });
   } catch (error) {

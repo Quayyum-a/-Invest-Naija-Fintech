@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 // Demo route removed for production
 import { authenticateToken } from "./middleware/auth";
-import { initializeApp } from "./data/init";
 import { env, logConfigStatus } from "./config/env";
 import {
   generalRateLimit,
@@ -183,8 +182,7 @@ import {
   getChallenges,
 } from "./routes/social";
 
-// Database viewer routes (development only)
-import { viewDatabase, getTableData, executeQuery } from "./routes/database";
+// Database viewer routes removed for MVP to simplify dependencies
 
 import NotificationService from "./services/notificationService";
 
@@ -221,9 +219,9 @@ export function createServer() {
           "https://www.investnaij.netlify.app",
           env.CORS_ORIGIN
         ].filter(Boolean);
-        
-        // Allow any netlify.app subdomain or if origin is in allowed list
-        if (origin.includes('.netlify.app') || allowedOrigins.includes(origin)) {
+
+        // Allow any vercel.app or netlify.app subdomain, or if origin is in allowed list
+        if (origin.includes('.vercel.app') || origin.includes('.netlify.app') || allowedOrigins.includes(origin)) {
           return callback(null, true);
         }
         
@@ -564,17 +562,14 @@ export function createServer() {
   );
   app.get("/social/challenges", authenticateToken, getChallenges);
 
-  // Database viewer routes (development only)
-  app.get("/dev/database", viewDatabase);
-  app.get("/dev/database/:tableName", getTableData);
-  app.post("/dev/database/query", executeQuery);
+  // Database viewer routes removed in MVP
 
-  // Initialize app on first startup
-  try {
-    initializeApp();
-  } catch (error) {
-    console.log("App already initialized or initialization skipped");
-  }
+  // Initialize app on first startup (disabled in MVP to avoid external DB dependency)
+  // try {
+  //   await initializeApp();
+  // } catch (error) {
+  //   console.log("App already initialized or initialization skipped");
+  // }
 
   // Start monitoring services
   startMonitoring();

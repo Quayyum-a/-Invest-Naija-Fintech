@@ -237,7 +237,7 @@ export const logConfigStatus = () => {
   console.log("🔧 InvestNaija Configuration:");
   console.log(`   Environment: ${env.NODE_ENV}`);
   console.log(`   Port: ${env.PORT}`);
-  console.log(`   Database: ✅ SQLite connected (data/investnaija.db)`);
+  console.log(`   Database: ${process.env.MONGO_URI || process.env.DATABASE_URL ? '✅ Configured' : '❌ Not configured'}`);
   console.log(
     `   Paystack: ${integrations.paystack.enabled ? "✅ Enabled" : "❌ Disabled"}`,
   );

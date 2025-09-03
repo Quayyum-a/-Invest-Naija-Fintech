@@ -1,15 +1,15 @@
 import { RequestHandler } from "express";
 import { ErrorResponse } from "@shared/api";
 import {
-  getUserWallet,
-  getUserTransactions,
-  getUserInvestments,
-  getAllUsers,
-  getTotalAUM,
-  getActiveInvestmentCount,
+  getUserWalletAsync as getUserWallet,
+  getUserTransactionsAsync as getUserTransactions,
+  getUserInvestmentsAsync as getUserInvestments,
+  getAllUsersAsync as getAllUsers,
+  getTotalAUMAsync as getTotalAUM,
+  getActiveInvestmentCountAsync as getActiveInvestmentCount,
 } from "../data/storage";
 
-export const getUserAnalytics: RequestHandler = (req, res) => {
+export const getUserAnalytics: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -19,9 +19,9 @@ export const getUserAnalytics: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const wallet = getUserWallet(userId);
-    const transactions = getUserTransactions(userId);
-    const investments = getUserInvestments(userId);
+    const wallet = await getUserWallet(userId);
+    const transactions = await getUserTransactions(userId);
+    const investments = await getUserInvestments(userId);
 
     if (!wallet) {
       return res.status(404).json({
@@ -76,7 +76,7 @@ export const getUserAnalytics: RequestHandler = (req, res) => {
   }
 };
 
-export const getAppAnalytics: RequestHandler = (req, res) => {
+export const getAppAnalytics: RequestHandler = async (req, res) => {
   try {
     // Only admins can access app-wide analytics
     if (
@@ -89,9 +89,9 @@ export const getAppAnalytics: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const allUsers = getAllUsers();
-    const totalAUM = getTotalAUM();
-    const activeInvestments = getActiveInvestmentCount();
+    const allUsers = await getAllUsers();
+    const totalAUM = await getTotalAUM();
+    const activeInvestments = await getActiveInvestmentCount();
 
     // Calculate user growth
     const userGrowth = calculateUserGrowth(allUsers);

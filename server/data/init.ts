@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { createUser } from "./storage";
+import { createUserAsync as createUser } from "./storage";
 
 /**
  * Initialize the application with default admin user
@@ -36,8 +36,8 @@ export const initializeApp = async () => {
 
   // Initialize sample financial challenges
   try {
-    const { createSampleChallenges } = await import("./storage");
-    createSampleChallenges?.();
+    const { createSampleChallengesAsync } = await import("./storage");
+    await createSampleChallengesAsync?.();
   } catch (error) {
     console.log("Sample challenges may already exist");
   }

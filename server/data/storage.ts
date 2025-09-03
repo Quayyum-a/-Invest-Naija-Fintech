@@ -1,242 +1,32 @@
-import { User, UserWallet, Transaction, Investment } from "@shared/api";
 import { randomUUID } from "crypto";
-import Database from "better-sqlite3";
-import path from "path";
-import fs from "fs";
+import { connectMongo, getCollections } from "../database/mongo";
+import { User, UserWallet, Transaction, Investment } from "@shared/api";
 
-// Initialize SQLite database
-const ensureDataDir = () => {
-  // In serverless environments like Netlify, use /tmp for temporary storage
-  const isServerless = process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
-  const dataDir = isServerless ? '/tmp' : path.join(process.cwd(), "data");
-  
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+let initialized = false;
+let useMemory = false;
+
+// In-memory fallback stores (dev-only)
+const memory = {
+  users: [] as Array<any>,
+  wallets: new Map<string, any>(),
+  sessions: new Map<string, { token: string; userId: string; createdAt: string }>(),
+};
+
+async function init() {
+  if (initialized) return;
+  try {
+    await connectMongo();
+  } catch (e) {
+    throw new Error("Database connection failed. Set MONGO_URI or DATABASE_URL for production deployment.");
   }
-  return dataDir;
-};
+  initialized = true;
+}
 
-const initDB = () => {
-  const dataDir = ensureDataDir();
-  const dbPath = path.join(dataDir, "investnaija.db");
-
-  console.log("🗄️  Initializing SQLite database at:", dbPath);
-  console.log("🌐 Environment:", process.env.NETLIFY ? 'Netlify' : 'Local');
-
-  const db = new Database(dbPath);
-  db.pragma("foreign_keys = ON");
-
-  // Create tables
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      phone TEXT NOT NULL,
-      firstName TEXT NOT NULL,
-      lastName TEXT NOT NULL,
-      bvn TEXT,
-      nin TEXT,
-      kycStatus TEXT NOT NULL DEFAULT 'pending',
-      status TEXT NOT NULL DEFAULT 'active',
-      role TEXT NOT NULL DEFAULT 'user',
-      lastLogin TEXT,
-      createdAt TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS user_sessions (
-      token TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      createdAt TEXT NOT NULL,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS wallets (
-      userId TEXT PRIMARY KEY,
-      balance REAL NOT NULL DEFAULT 0,
-      totalInvested REAL NOT NULL DEFAULT 0,
-      totalReturns REAL NOT NULL DEFAULT 0,
-      lastUpdated TEXT NOT NULL,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS transactions (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      type TEXT NOT NULL,
-      amount REAL NOT NULL,
-      description TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'pending',
-      metadata TEXT,
-      createdAt TEXT NOT NULL,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-    );
-
-        CREATE TABLE IF NOT EXISTS investments (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      type TEXT NOT NULL,
-      amount REAL NOT NULL,
-      currentValue REAL NOT NULL,
-      returns REAL NOT NULL DEFAULT 0,
-      status TEXT NOT NULL DEFAULT 'active',
-      createdAt TEXT NOT NULL,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-    );
-
-    -- Social Banking Tables
-    CREATE TABLE IF NOT EXISTS social_groups (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      description TEXT,
-      targetAmount REAL NOT NULL,
-      currentAmount REAL NOT NULL DEFAULT 0,
-      createdBy TEXT NOT NULL,
-      endDate TEXT,
-      status TEXT NOT NULL DEFAULT 'active',
-      category TEXT,
-      createdAt TEXT NOT NULL,
-      FOREIGN KEY (createdBy) REFERENCES users(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS group_members (
-      id TEXT PRIMARY KEY,
-      groupId TEXT NOT NULL,
-      userId TEXT NOT NULL,
-      contribution REAL NOT NULL DEFAULT 0,
-      joinedAt TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'active',
-      FOREIGN KEY (groupId) REFERENCES social_groups(id) ON DELETE CASCADE,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
-      UNIQUE(groupId, userId)
-    );
-
-    CREATE TABLE IF NOT EXISTS money_requests (
-      id TEXT PRIMARY KEY,
-      fromUserId TEXT NOT NULL,
-      toUserId TEXT NOT NULL,
-      amount REAL NOT NULL,
-      reason TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'pending',
-      dueDate TEXT,
-      createdAt TEXT NOT NULL,
-      updatedAt TEXT NOT NULL,
-      FOREIGN KEY (fromUserId) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (toUserId) REFERENCES users(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS social_payments (
-      id TEXT PRIMARY KEY,
-      fromUserId TEXT NOT NULL,
-      toUserId TEXT NOT NULL,
-      amount REAL NOT NULL,
-      message TEXT,
-      type TEXT NOT NULL DEFAULT 'payment',
-      isPublic BOOLEAN DEFAULT false,
-      createdAt TEXT NOT NULL,
-      FOREIGN KEY (fromUserId) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (toUserId) REFERENCES users(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS financial_challenges (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
-      targetAmount REAL NOT NULL,
-      duration INTEGER NOT NULL,
-      startDate TEXT NOT NULL,
-      endDate TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'upcoming',
-      category TEXT NOT NULL,
-      createdAt TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS challenge_participants (
-      id TEXT PRIMARY KEY,
-      challengeId TEXT NOT NULL,
-      userId TEXT NOT NULL,
-      progress REAL NOT NULL DEFAULT 0,
-      rank INTEGER DEFAULT 0,
-      joinedAt TEXT NOT NULL,
-      FOREIGN KEY (challengeId) REFERENCES financial_challenges(id) ON DELETE CASCADE,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
-      UNIQUE(challengeId, userId)
-    );
-
-    -- Notification System
-    CREATE TABLE IF NOT EXISTS notifications (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      title TEXT NOT NULL,
-      message TEXT NOT NULL,
-      type TEXT NOT NULL,
-      priority TEXT DEFAULT 'normal',
-      read BOOLEAN DEFAULT false,
-      metadata TEXT,
-      createdAt TEXT NOT NULL,
-      readAt TEXT,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-    );
-
-    -- Crypto Holdings
-    CREATE TABLE IF NOT EXISTS crypto_holdings (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      symbol TEXT NOT NULL,
-      name TEXT NOT NULL,
-      quantity REAL NOT NULL,
-      averageBuyPrice REAL NOT NULL,
-      currentPrice REAL NOT NULL,
-      totalInvested REAL NOT NULL,
-      createdAt TEXT NOT NULL,
-      updatedAt TEXT NOT NULL,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-    );
-
-    -- Business Profiles
-    CREATE TABLE IF NOT EXISTS business_profiles (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      businessName TEXT NOT NULL,
-      businessType TEXT NOT NULL,
-      rcNumber TEXT,
-      tin TEXT,
-      industry TEXT,
-      businessAddress TEXT,
-      verificationStatus TEXT DEFAULT 'pending',
-      registrationDate TEXT,
-      createdAt TEXT NOT NULL,
-      updatedAt TEXT NOT NULL,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-    );
-
-    -- Cards Management
-    CREATE TABLE IF NOT EXISTS cards (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      cardNumber TEXT NOT NULL,
-      cardType TEXT NOT NULL,
-      cardBrand TEXT DEFAULT 'verve',
-      expiryMonth INTEGER,
-      expiryYear INTEGER,
-      status TEXT DEFAULT 'active',
-      dailyLimit REAL DEFAULT 500000,
-      monthlyLimit REAL DEFAULT 2000000,
-      onlineEnabled BOOLEAN DEFAULT true,
-      contactlessEnabled BOOLEAN DEFAULT true,
-      internationalEnabled BOOLEAN DEFAULT false,
-      issuedDate TEXT NOT NULL,
-      lastUsed TEXT,
-      createdAt TEXT NOT NULL,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-    );
-  `);
-
-  console.log("✅ Database schema initialized");
-  return db;
-};
-
-const db = initDB();
+// Helper to ensure init before operations
+async function withInit<T>(fn: () => Promise<T>): Promise<T> {
+  await init();
+  return fn();
+}
 
 // User Management Functions
 export const createUser = (userData: {
@@ -247,333 +37,455 @@ export const createUser = (userData: {
   lastName: string;
   role?: "user" | "admin" | "super_admin";
 }): User => {
-  const userId = randomUUID();
-  const now = new Date().toISOString();
+  throw new Error("createUser must be used asynchronously via createUserAsync()");
+};
 
-  // Determine role based on email or provided role
-  const userRole =
-    userData.role ||
-    (userData.email.endsWith("@admin.investnaija.com")
-      ? "super_admin"
-      : userData.email.endsWith("@investnaija.com")
+export async function createUserAsync(userData: {
+  email: string;
+  password: string;
+  phone: string;
+  firstName: string;
+  lastName: string;
+  role?: "user" | "admin" | "super_admin";
+}): Promise<User> {
+  return withInit(async () => {
+    const userId = randomUUID();
+    const now = new Date().toISOString();
+
+    const userRole =
+      userData.role ||
+      (userData.email.endsWith("@admin.investnaija.com")
+        ? "super_admin"
+        : userData.email.endsWith("@investnaija.com")
         ? "admin"
         : "user");
 
-  const user: User = {
-    id: userId,
-    email: userData.email,
-    phone: userData.phone,
-    firstName: userData.firstName,
-    lastName: userData.lastName,
-    kycStatus: "pending",
-    status: "active",
-    role: userRole,
-    createdAt: now,
-  };
+    const user: User = {
+      id: userId,
+      email: userData.email,
+      phone: userData.phone,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      kycStatus: "pending",
+      status: "active",
+      role: userRole,
+      createdAt: now,
+    };
 
-  try {
-    const insertUser = db.prepare(`
-      INSERT INTO users (id, email, password, phone, firstName, lastName, kycStatus, status, role, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    insertUser.run(
+    if (useMemory) {
+      if (memory.users.find((u) => u.email === user.email)) {
+        throw new Error("User with this email already exists");
+      }
+      memory.users.push({ ...user, password: userData.password });
+      memory.wallets.set(userId, {
+        userId,
+        balance: 0,
+        totalInvested: 0,
+        totalReturns: 0,
+        lastUpdated: now,
+      } as UserWallet);
+      return user;
+    }
+
+    const { users, wallets } = getCollections();
+    await users.insertOne({ ...user, password: userData.password });
+    await wallets.insertOne({
       userId,
-      userData.email,
-      userData.password,
-      userData.phone,
-      userData.firstName,
-      userData.lastName,
-      "pending",
-      "active",
-      userRole,
-      now,
-    );
-
-    const insertWallet = db.prepare(`
-      INSERT INTO wallets (userId, balance, totalInvested, totalReturns, lastUpdated)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    insertWallet.run(userId, 0, 0, 0, now);
+      balance: 0,
+      totalInvested: 0,
+      totalReturns: 0,
+      lastUpdated: now,
+    } satisfies UserWallet);
 
     return user;
-  } catch (error) {
-    throw new Error(`Failed to create user: ${error}`);
-  }
+  });
+}
+
+export const getUserByEmail = (email: string): (User & { password: string }) | null => {
+  throw new Error("getUserByEmail must be used asynchronously via getUserByEmailAsync()");
 };
 
-export const getUserByEmail = (
-  email: string,
-): (User & { password: string }) | null => {
-  const stmt = db.prepare("SELECT * FROM users WHERE email = ?");
-  return (stmt.get(email) as any) || null;
-};
+export async function getUserByEmailAsync(email: string): Promise<(User & { password: string }) | null> {
+  return withInit(async () => {
+    if (useMemory) {
+      const doc = memory.users.find((u) => u.email === email);
+      if (!doc) return null as any;
+      const { password, ...rest } = doc as any;
+      return { ...(rest as User), password } as any;
+    }
+    const { users } = getCollections();
+    const doc = await users.findOne({ email });
+    if (!doc) return null as any;
+    const { password, _id, ...rest } = doc as any;
+    return { ...(rest as User), password } as any;
+  });
+}
 
 export const getUserById = (userId: string): User | null => {
-  const stmt = db.prepare("SELECT * FROM users WHERE id = ?");
-  const row = stmt.get(userId) as any;
-  if (!row) return null;
-  const { password, ...user } = row;
-  return user;
+  throw new Error("getUserById must be used asynchronously via getUserByIdAsync()");
 };
 
-export const updateUser = (
-  userId: string,
-  updates: Partial<User>,
-): User | null => {
-  const current = getUserById(userId);
-  if (!current) return null;
+export async function getUserByIdAsync(userId: string): Promise<User | null> {
+  return withInit(async () => {
+    if (useMemory) {
+      const doc = memory.users.find((u) => u.id === userId);
+      if (!doc) return null;
+      const { password, ...rest } = doc as any;
+      return rest as User;
+    }
+    const { users } = getCollections();
+    const doc = await users.findOne({ id: userId });
+    if (!doc) return null;
+    const { password, _id, ...user } = doc as any;
+    return user as User;
+  });
+}
 
-  const updated = { ...current, ...updates };
-  const stmt = db.prepare(`
-    UPDATE users SET email = ?, phone = ?, firstName = ?, lastName = ?,
-    bvn = ?, nin = ?, kycStatus = ?, status = ?, lastLogin = ? WHERE id = ?
-  `);
-  stmt.run(
-    updated.email,
-    updated.phone,
-    updated.firstName,
-    updated.lastName,
-    updated.bvn || null,
-    updated.nin || null,
-    updated.kycStatus,
-    updated.status,
-    updated.lastLogin || null,
-    userId,
-  );
-  return updated;
+export const updateUser = (userId: string, updates: Partial<User>): User | null => {
+  throw new Error("updateUser must be used asynchronously via updateUserAsync()");
 };
+
+export async function updateUserAsync(userId: string, updates: Partial<User>): Promise<User | null> {
+  return withInit(async () => {
+    if (useMemory) {
+      const idx = memory.users.findIndex((u) => u.id === userId);
+      if (idx === -1) return null;
+      const next = { ...(memory.users[idx] as any), ...updates } as any;
+      memory.users[idx] = next;
+      const { password, ...rest } = next;
+      return rest as User;
+    }
+    const { users } = getCollections();
+    const current = await users.findOne({ id: userId });
+    if (!current) return null;
+
+    const next = { ...(current as any), ...updates } as any;
+    await users.updateOne(
+      { id: userId },
+      {
+        $set: {
+          email: next.email,
+          phone: next.phone,
+          firstName: next.firstName,
+          lastName: next.lastName,
+          bvn: next.bvn ?? null,
+          nin: next.nin ?? null,
+          kycStatus: next.kycStatus,
+          status: next.status,
+          lastLogin: next.lastLogin ?? null,
+        },
+      }
+    );
+
+    const { password, _id, ...rest } = next;
+    return rest as User;
+  });
+}
 
 // Session Management
 export const createSession = (userId: string): string => {
-  const token = randomUUID();
-  const now = new Date().toISOString();
-
-  const insertSession = db.prepare(
-    "INSERT INTO user_sessions (token, userId, createdAt) VALUES (?, ?, ?)",
-  );
-  insertSession.run(token, userId, now);
-
-  const updateLogin = db.prepare("UPDATE users SET lastLogin = ? WHERE id = ?");
-  updateLogin.run(now, userId);
-
-  return token;
+  throw new Error("createSession must be used asynchronously via createSessionAsync()");
 };
+
+export async function createSessionAsync(userId: string): Promise<string> {
+  return withInit(async () => {
+    const token = randomUUID();
+    const now = new Date().toISOString();
+    if (useMemory) {
+      memory.sessions.set(token, { token, userId, createdAt: now });
+      const idx = memory.users.findIndex((u) => u.id === userId);
+      if (idx >= 0) memory.users[idx].lastLogin = now;
+      return token;
+    }
+    const { sessions, users } = getCollections();
+    await sessions.insertOne({ token, userId, createdAt: now });
+    await users.updateOne({ id: userId }, { $set: { lastLogin: now } });
+    return token;
+  });
+}
 
 export const getSessionUser = (token: string): User | null => {
-  const stmt = db.prepare("SELECT userId FROM user_sessions WHERE token = ?");
-  const session = stmt.get(token) as any;
-  return session ? getUserById(session.userId) : null;
+  throw new Error("getSessionUser must be used asynchronously via getSessionUserAsync()");
 };
 
+export async function getSessionUserAsync(token: string): Promise<User | null> {
+  return withInit(async () => {
+    if (useMemory) {
+      const session = memory.sessions.get(token);
+      if (!session) return null;
+      const user = memory.users.find((u) => u.id === session.userId);
+      if (!user) return null;
+      const { password, ...rest } = user as any;
+      return rest as User;
+    }
+    const { sessions, users } = getCollections();
+    const session = await sessions.findOne({ token });
+    if (!session) return null;
+    const user = await users.findOne({ id: (session as any).userId });
+    if (!user) return null;
+    const { password, _id, ...rest } = user as any;
+    return rest as User;
+  });
+}
+
 export const deleteSession = (token: string): boolean => {
-  const stmt = db.prepare("DELETE FROM user_sessions WHERE token = ?");
-  return stmt.run(token).changes > 0;
+  throw new Error("deleteSession must be used asynchronously via deleteSessionAsync()");
 };
+
+export async function deleteSessionAsync(token: string): Promise<boolean> {
+  return withInit(async () => {
+    if (useMemory) {
+      const existed = memory.sessions.delete(token);
+      return existed;
+    }
+    const { sessions } = getCollections();
+    const result = await sessions.deleteOne({ token });
+    return result.deletedCount === 1;
+  });
+}
 
 // Wallet Management
 export const getUserWallet = (userId: string): UserWallet | null => {
-  const stmt = db.prepare("SELECT * FROM wallets WHERE userId = ?");
-  return (stmt.get(userId) as any) || null;
+  throw new Error("getUserWallet must be used asynchronously via getUserWalletAsync()");
 };
+
+export async function getUserWalletAsync(userId: string): Promise<UserWallet | null> {
+  return withInit(async () => {
+    if (useMemory) {
+      return (memory.wallets.get(userId) as any) || null;
+    }
+    const { wallets } = getCollections();
+    return (await wallets.findOne({ userId })) as any;
+  });
+}
 
 export const updateWallet = (
   userId: string,
   updates: Partial<Omit<UserWallet, "userId">>,
 ): UserWallet | null => {
-  const current = getUserWallet(userId);
-  if (!current) return null;
-
-  const updated = {
-    ...current,
-    ...updates,
-    lastUpdated: new Date().toISOString(),
-  };
-  const stmt = db.prepare(
-    "UPDATE wallets SET balance = ?, totalInvested = ?, totalReturns = ?, lastUpdated = ? WHERE userId = ?",
-  );
-  stmt.run(
-    updated.balance,
-    updated.totalInvested,
-    updated.totalReturns,
-    updated.lastUpdated,
-    userId,
-  );
-  return updated;
+  throw new Error("updateWallet must be used asynchronously via updateWalletAsync()");
 };
+
+export async function updateWalletAsync(
+  userId: string,
+  updates: Partial<Omit<UserWallet, "userId">>,
+): Promise<UserWallet | null> {
+  return withInit(async () => {
+    const now = new Date().toISOString();
+    if (useMemory) {
+      const w = memory.wallets.get(userId);
+      if (!w) return null;
+      const next = { ...w, ...updates, lastUpdated: now } as any;
+      memory.wallets.set(userId, next);
+      return next as any;
+    }
+    const { wallets } = getCollections();
+    const res = await wallets.findOneAndUpdate(
+      { userId },
+      { $set: { ...updates, lastUpdated: now } },
+      { returnDocument: "after" }
+    );
+    return res.value as any;
+  });
+}
 
 // Transaction Management
 export const createTransaction = (
   transactionData: Omit<Transaction, "id" | "createdAt">,
 ): Transaction => {
-  const transactionId = randomUUID();
-  const now = new Date().toISOString();
-  const transaction: Transaction = {
-    ...transactionData,
-    id: transactionId,
-    createdAt: now,
-  };
-
-  const stmt = db.prepare(`
-    INSERT INTO transactions (id, userId, type, amount, description, status, metadata, createdAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  stmt.run(
-    transactionId,
-    transactionData.userId,
-    transactionData.type,
-    transactionData.amount,
-    transactionData.description,
-    transactionData.status,
-    transactionData.metadata ? JSON.stringify(transactionData.metadata) : null,
-    now,
-  );
-
-  return transaction;
+  throw new Error("createTransaction must be used asynchronously via createTransactionAsync()");
 };
+
+export async function createTransactionAsync(
+  transactionData: Omit<Transaction, "id" | "createdAt">,
+): Promise<Transaction> {
+  return withInit(async () => {
+    const { transactions } = getCollections();
+    const transactionId = randomUUID();
+    const now = new Date().toISOString();
+    const transaction: Transaction = {
+      ...transactionData,
+      id: transactionId,
+      createdAt: now,
+    };
+    await transactions.insertOne({ ...transaction });
+    return transaction;
+  });
+}
 
 export const getUserTransactions = (
   userId: string,
   limit: number = 50,
 ): Transaction[] => {
-  const stmt = db.prepare(
-    "SELECT * FROM transactions WHERE userId = ? ORDER BY createdAt DESC LIMIT ?",
-  );
-  const rows = stmt.all(userId, limit) as any[];
-  return rows.map((row) => ({
-    ...row,
-    metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
-  }));
+  throw new Error("getUserTransactions must be used asynchronously via getUserTransactionsAsync()");
 };
 
+export async function getUserTransactionsAsync(
+  userId: string,
+  limit: number = 50,
+): Promise<Transaction[]> {
+  return withInit(async () => {
+    const { transactions } = getCollections();
+    const rows = await transactions
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+    return rows as any;
+  });
+}
+
 export const getTransaction = (transactionId: string): Transaction | null => {
-  const stmt = db.prepare("SELECT * FROM transactions WHERE id = ?");
-  const row = stmt.get(transactionId) as any;
-  return row
-    ? { ...row, metadata: row.metadata ? JSON.parse(row.metadata) : undefined }
-    : null;
+  throw new Error("getTransaction must be used asynchronously via getTransactionAsync()");
 };
+
+export async function getTransactionAsync(transactionId: string): Promise<Transaction | null> {
+  return withInit(async () => {
+    const { transactions } = getCollections();
+    return (await transactions.findOne({ id: transactionId })) as any;
+  });
+}
 
 export const updateTransaction = (
   transactionId: string,
   updates: Partial<Transaction>,
 ): Transaction | null => {
-  const current = getTransaction(transactionId);
-  if (!current) return null;
-
-  const updated = { ...current, ...updates };
-  const stmt = db.prepare(
-    "UPDATE transactions SET type = ?, amount = ?, description = ?, status = ?, metadata = ? WHERE id = ?",
-  );
-  stmt.run(
-    updated.type,
-    updated.amount,
-    updated.description,
-    updated.status,
-    updated.metadata ? JSON.stringify(updated.metadata) : null,
-    transactionId,
-  );
-  return updated;
+  throw new Error("updateTransaction must be used asynchronously via updateTransactionAsync()");
 };
+
+export async function updateTransactionAsync(
+  transactionId: string,
+  updates: Partial<Transaction>,
+): Promise<Transaction | null> {
+  return withInit(async () => {
+    const { transactions } = getCollections();
+    const res = await transactions.findOneAndUpdate(
+      { id: transactionId },
+      { $set: { ...updates } },
+      { returnDocument: "after" }
+    );
+    return res.value as any;
+  });
+}
 
 // Investment Management
 export const createInvestment = (
-  investmentData: Omit<
-    Investment,
-    "id" | "createdAt" | "currentValue" | "returns"
-  >,
+  investmentData: Omit<Investment, "id" | "createdAt" | "currentValue" | "returns">,
 ): Investment => {
-  const investmentId = randomUUID();
-  const now = new Date().toISOString();
-  const investment: Investment = {
-    ...investmentData,
-    id: investmentId,
-    currentValue: investmentData.amount,
-    returns: 0,
-    createdAt: now,
-  };
-
-  const stmt = db.prepare(`
-    INSERT INTO investments (id, userId, type, amount, currentValue, returns, status, createdAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  stmt.run(
-    investmentId,
-    investmentData.userId,
-    investmentData.type,
-    investmentData.amount,
-    investment.currentValue,
-    investment.returns,
-    investmentData.status,
-    now,
-  );
-
-  return investment;
+  throw new Error("createInvestment must be used asynchronously via createInvestmentAsync()");
 };
+
+export async function createInvestmentAsync(
+  investmentData: Omit<Investment, "id" | "createdAt" | "currentValue" | "returns">,
+): Promise<Investment> {
+  return withInit(async () => {
+    const { investments } = getCollections();
+    const investmentId = randomUUID();
+    const now = new Date().toISOString();
+    const investment: Investment = {
+      ...investmentData,
+      id: investmentId,
+      currentValue: investmentData.amount,
+      returns: 0,
+      createdAt: now,
+    };
+    await investments.insertOne(investment as any);
+    return investment;
+  });
+}
 
 export const getUserInvestments = (userId: string): Investment[] => {
-  const stmt = db.prepare(
-    "SELECT * FROM investments WHERE userId = ? ORDER BY createdAt DESC",
-  );
-  return stmt.all(userId) as any[];
+  throw new Error("getUserInvestments must be used asynchronously via getUserInvestmentsAsync()");
 };
+
+export async function getUserInvestmentsAsync(userId: string): Promise<Investment[]> {
+  return withInit(async () => {
+    const { investments } = getCollections();
+    return (await investments.find({ userId }).sort({ createdAt: -1 }).toArray()) as any;
+  });
+}
 
 export const updateInvestment = (
   investmentId: string,
   updates: Partial<Investment>,
 ): Investment | null => {
-  const stmt = db.prepare("SELECT * FROM investments WHERE id = ?");
-  const current = stmt.get(investmentId) as any;
-  if (!current) return null;
-
-  const updated = { ...current, ...updates };
-  const updateStmt = db.prepare(
-    "UPDATE investments SET type = ?, amount = ?, currentValue = ?, returns = ?, status = ? WHERE id = ?",
-  );
-  updateStmt.run(
-    updated.type,
-    updated.amount,
-    updated.currentValue,
-    updated.returns,
-    updated.status,
-    investmentId,
-  );
-  return updated;
+  throw new Error("updateInvestment must be used asynchronously via updateInvestmentAsync()");
 };
+
+export async function updateInvestmentAsync(
+  investmentId: string,
+  updates: Partial<Investment>,
+): Promise<Investment | null> {
+  return withInit(async () => {
+    const { investments } = getCollections();
+    const res = await investments.findOneAndUpdate(
+      { id: investmentId },
+      { $set: { ...updates } },
+      { returnDocument: "after" }
+    );
+    return res.value as any;
+  });
+}
 
 // Utility Functions
 export const getAllUsers = (): User[] => {
-  const stmt = db.prepare("SELECT * FROM users");
-  const rows = stmt.all() as any[];
-  return rows.map(({ password, ...user }) => user);
+  throw new Error("getAllUsers must be used asynchronously via getAllUsersAsync()");
 };
+
+export async function getAllUsersAsync(): Promise<User[]> {
+  return withInit(async () => {
+    const { users } = getCollections();
+    const rows = await users.find({}).toArray();
+    return rows.map(({ password, _id, ...u }: any) => u as User);
+  });
+}
 
 export const getUserCount = (): number => {
-  const stmt = db.prepare("SELECT COUNT(*) as count FROM users");
-  const result = stmt.get() as any;
-  return result.count || 0;
+  throw new Error("getUserCount must be used asynchronously via getUserCountAsync()");
 };
+
+export async function getUserCountAsync(): Promise<number> {
+  return withInit(async () => {
+    const { users } = getCollections();
+    return (await users.countDocuments({})) || 0;
+  });
+}
 
 export const getTotalAUM = (): number => {
-  const stmt = db.prepare("SELECT SUM(totalInvested) as total FROM wallets");
-  const result = stmt.get() as any;
-  return result.total || 0;
+  throw new Error("getTotalAUM must be used asynchronously via getTotalAUMAsync()");
 };
+
+export async function getTotalAUMAsync(): Promise<number> {
+  return withInit(async () => {
+    const { wallets } = getCollections();
+    const agg = await wallets.aggregate([
+      { $group: { _id: null, total: { $sum: "$totalInvested" } } },
+    ]).toArray();
+    return (agg[0]?.total as number) || 0;
+  });
+}
 
 export const getActiveInvestmentCount = (): number => {
-  const stmt = db.prepare(
-    "SELECT COUNT(*) as count FROM investments WHERE status = 'active'",
-  );
-  const result = stmt.get() as any;
-  return result.count || 0;
+  throw new Error("getActiveInvestmentCount must be used asynchronously via getActiveInvestmentCountAsync()");
 };
 
+export async function getActiveInvestmentCountAsync(): Promise<number> {
+  return withInit(async () => {
+    const { investments } = getCollections();
+    return (await investments.countDocuments({ status: "active" })) || 0;
+  });
+}
+
 export const getPendingKYCCount = (): number => {
-  const stmt = db.prepare(
-    "SELECT COUNT(*) as count FROM users WHERE kycStatus = 'pending'",
-  );
-  const result = stmt.get() as any;
-  return result.count || 0;
+  throw new Error("getPendingKYCCount must be used asynchronously via getPendingKYCCountAsync()");
 };
+
+export async function getPendingKYCCountAsync(): Promise<number> {
+  return withInit(async () => {
+    const { users } = getCollections();
+    return (await users.countDocuments({ kycStatus: "pending" })) || 0;
+  });
+}
 
 // Social Banking Functions
 export const createSocialGroup = (groupData: {
@@ -584,67 +496,113 @@ export const createSocialGroup = (groupData: {
   endDate?: string;
   category?: string;
 }) => {
-  const groupId = randomUUID();
-  const now = new Date().toISOString();
-
-  const stmt = db.prepare(`
-    INSERT INTO social_groups (id, name, description, targetAmount, createdBy, endDate, category, createdAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  stmt.run(
-    groupId,
-    groupData.name,
-    groupData.description || "",
-    groupData.targetAmount,
-    groupData.createdBy,
-    groupData.endDate || "",
-    groupData.category || "general",
-    now,
-  );
-
-  // Add creator as first member
-  const memberStmt = db.prepare(`
-    INSERT INTO group_members (id, groupId, userId, joinedAt)
-    VALUES (?, ?, ?, ?)
-  `);
-  memberStmt.run(randomUUID(), groupId, groupData.createdBy, now);
-
-  return {
-    id: groupId,
-    ...groupData,
-    currentAmount: 0,
-    status: "active",
-    createdAt: now,
-  };
+  throw new Error("createSocialGroup must be used asynchronously via createSocialGroupAsync()");
 };
+
+export async function createSocialGroupAsync(groupData: {
+  name: string;
+  description?: string;
+  targetAmount: number;
+  createdBy: string;
+  endDate?: string;
+  category?: string;
+}) {
+  return withInit(async () => {
+    const { social_groups, group_members } = getCollections();
+    const groupId = randomUUID();
+    const now = new Date().toISOString();
+
+    await social_groups.insertOne({
+      id: groupId,
+      name: groupData.name,
+      description: groupData.description || "",
+      targetAmount: groupData.targetAmount,
+      currentAmount: 0,
+      createdBy: groupData.createdBy,
+      endDate: groupData.endDate || "",
+      status: "active",
+      category: groupData.category || "general",
+      createdAt: now,
+    });
+
+    await group_members.insertOne({
+      id: randomUUID(),
+      groupId,
+      userId: groupData.createdBy,
+      contribution: 0,
+      joinedAt: now,
+      status: "active",
+    });
+
+    return {
+      id: groupId,
+      ...groupData,
+      currentAmount: 0,
+      status: "active",
+      createdAt: now,
+    };
+  });
+}
 
 export const getUserSocialGroups = (userId: string) => {
-  const stmt = db.prepare(`
-    SELECT sg.*,
-           COUNT(gm.id) as memberCount,
-           SUM(gm.contribution) as totalContributions
-    FROM social_groups sg
-    LEFT JOIN group_members gm ON sg.id = gm.groupId
-    WHERE sg.id IN (
-      SELECT groupId FROM group_members WHERE userId = ? AND status = 'active'
-    )
-    GROUP BY sg.id
-    ORDER BY sg.createdAt DESC
-  `);
-  return stmt.all(userId) as any[];
+  throw new Error("getUserSocialGroups must be used asynchronously via getUserSocialGroupsAsync()");
 };
 
+export async function getUserSocialGroupsAsync(userId: string) {
+  return withInit(async () => {
+    const { social_groups, group_members } = getCollections();
+
+    const memberGroups = await group_members
+      .find({ userId, status: "active" })
+      .project({ groupId: 1 })
+      .toArray();
+    const groupIds = memberGroups.map((m: any) => m.groupId);
+
+    const groups = await social_groups.find({ id: { $in: groupIds } }).toArray();
+
+    // Enrich with counts
+    return await Promise.all(
+      groups.map(async (g: any) => {
+        const memberCount = await group_members.countDocuments({ groupId: g.id });
+        const totalContributionsAgg = await group_members
+          .aggregate([
+            { $match: { groupId: g.id } },
+            { $group: { _id: null, total: { $sum: "$contribution" } } },
+          ])
+          .toArray();
+        const totalContributions = totalContributionsAgg[0]?.total || 0;
+        return { ...g, memberCount, totalContributions };
+      })
+    );
+  });
+}
+
 export const getGroupMembers = (groupId: string) => {
-  const stmt = db.prepare(`
-    SELECT gm.*, u.firstName, u.lastName, u.email
-    FROM group_members gm
-    JOIN users u ON gm.userId = u.id
-    WHERE gm.groupId = ? AND gm.status = 'active'
-    ORDER BY gm.contribution DESC
-  `);
-  return stmt.all(groupId) as any[];
+  throw new Error("getGroupMembers must be used asynchronously via getGroupMembersAsync()");
 };
+
+export async function getGroupMembersAsync(groupId: string) {
+  return withInit(async () => {
+    const { group_members, users } = getCollections();
+    const members = await group_members.find({ groupId, status: "active" }).toArray();
+    const userIds = members.map((m: any) => m.userId);
+    const usersMap = new Map<string, any>();
+    const usersArr = await users
+      .find({ id: { $in: userIds } })
+      .project({ password: 0 })
+      .toArray();
+    usersArr.forEach((u: any) => usersMap.set(u.id, u));
+
+    return members
+      .sort((a: any, b: any) => (b.contribution || 0) - (a.contribution || 0))
+      .map((m: any) => ({
+        ...m,
+        firstName: usersMap.get(m.userId)?.firstName,
+        lastName: usersMap.get(m.userId)?.lastName,
+        email: usersMap.get(m.userId)?.email,
+      }));
+  });
+}
 
 export const createMoneyRequest = (requestData: {
   fromUserId: string;
@@ -653,47 +611,63 @@ export const createMoneyRequest = (requestData: {
   reason: string;
   dueDate?: string;
 }) => {
-  const requestId = randomUUID();
-  const now = new Date().toISOString();
-
-  const stmt = db.prepare(`
-    INSERT INTO money_requests (id, fromUserId, toUserId, amount, reason, dueDate, createdAt, updatedAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  stmt.run(
-    requestId,
-    requestData.fromUserId,
-    requestData.toUserId,
-    requestData.amount,
-    requestData.reason,
-    requestData.dueDate || "",
-    now,
-    now,
-  );
-
-  return {
-    id: requestId,
-    ...requestData,
-    status: "pending",
-    createdAt: now,
-    updatedAt: now,
-  };
+  throw new Error("createMoneyRequest must be used asynchronously via createMoneyRequestAsync()");
 };
+
+export async function createMoneyRequestAsync(requestData: {
+  fromUserId: string;
+  toUserId: string;
+  amount: number;
+  reason: string;
+  dueDate?: string;
+}) {
+  return withInit(async () => {
+    const { money_requests } = getCollections();
+    const requestId = randomUUID();
+    const now = new Date().toISOString();
+
+    await money_requests.insertOne({
+      id: requestId,
+      ...requestData,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return { id: requestId, ...requestData, status: "pending", createdAt: now, updatedAt: now };
+  });
+}
 
 export const getUserMoneyRequests = (userId: string) => {
-  const stmt = db.prepare(`
-    SELECT mr.*,
-           uf.firstName as fromFirstName, uf.lastName as fromLastName,
-           ut.firstName as toFirstName, ut.lastName as toLastName
-    FROM money_requests mr
-    JOIN users uf ON mr.fromUserId = uf.id
-    JOIN users ut ON mr.toUserId = ut.id
-    WHERE mr.fromUserId = ? OR mr.toUserId = ?
-    ORDER BY mr.createdAt DESC
-  `);
-  return stmt.all(userId, userId) as any[];
+  throw new Error("getUserMoneyRequests must be used asynchronously via getUserMoneyRequestsAsync()");
 };
+
+export async function getUserMoneyRequestsAsync(userId: string) {
+  return withInit(async () => {
+    const { money_requests, users } = getCollections();
+    const requests = await money_requests
+      .find({ $or: [{ fromUserId: userId }, { toUserId: userId }] })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    const involvedIds = Array.from(
+      new Set(requests.flatMap((r: any) => [r.fromUserId, r.toUserId]))
+    );
+    const usersArr = await users
+      .find({ id: { $in: involvedIds } })
+      .project({ password: 0 })
+      .toArray();
+    const map = new Map(usersArr.map((u: any) => [u.id, u]));
+
+    return requests.map((r: any) => ({
+      ...r,
+      fromFirstName: map.get(r.fromUserId)?.firstName,
+      fromLastName: map.get(r.fromUserId)?.lastName,
+      toFirstName: map.get(r.toUserId)?.firstName,
+      toLastName: map.get(r.toUserId)?.lastName,
+    }));
+  });
+}
 
 export const createSocialPayment = (paymentData: {
   fromUserId: string;
@@ -703,64 +677,94 @@ export const createSocialPayment = (paymentData: {
   type: string;
   isPublic?: boolean;
 }) => {
-  const paymentId = randomUUID();
-  const now = new Date().toISOString();
-
-  const stmt = db.prepare(`
-    INSERT INTO social_payments (id, fromUserId, toUserId, amount, message, type, isPublic, createdAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  stmt.run(
-    paymentId,
-    paymentData.fromUserId,
-    paymentData.toUserId,
-    paymentData.amount,
-    paymentData.message || "",
-    paymentData.type,
-    paymentData.isPublic || false,
-    now,
-  );
-
-  return { id: paymentId, ...paymentData, createdAt: now };
+  throw new Error("createSocialPayment must be used asynchronously via createSocialPaymentAsync()");
 };
+
+export async function createSocialPaymentAsync(paymentData: {
+  fromUserId: string;
+  toUserId: string;
+  amount: number;
+  message?: string;
+  type: string;
+  isPublic?: boolean;
+}) {
+  return withInit(async () => {
+    const { social_payments } = getCollections();
+    const paymentId = randomUUID();
+    const now = new Date().toISOString();
+
+    await social_payments.insertOne({
+      id: paymentId,
+      ...paymentData,
+      createdAt: now,
+    });
+
+    return { id: paymentId, ...paymentData, createdAt: now };
+  });
+}
 
 export const getUserSocialPayments = (userId: string) => {
-  const stmt = db.prepare(`
-    SELECT sp.*,
-           uf.firstName as fromFirstName, uf.lastName as fromLastName,
-           ut.firstName as toFirstName, ut.lastName as toLastName
-    FROM social_payments sp
-    JOIN users uf ON sp.fromUserId = uf.id
-    JOIN users ut ON sp.toUserId = ut.id
-    WHERE sp.fromUserId = ? OR sp.toUserId = ? OR sp.isPublic = true
-    ORDER BY sp.createdAt DESC
-    LIMIT 50
-  `);
-  return stmt.all(userId, userId) as any[];
+  throw new Error("getUserSocialPayments must be used asynchronously via getUserSocialPaymentsAsync()");
 };
+
+export async function getUserSocialPaymentsAsync(userId: string) {
+  return withInit(async () => {
+    const { social_payments, users } = getCollections();
+    const payments = await social_payments
+      .find({ $or: [{ fromUserId: userId }, { toUserId: userId }, { isPublic: true }] })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .toArray();
+
+    const ids = Array.from(new Set(payments.flatMap((p: any) => [p.fromUserId, p.toUserId])));
+    const usersArr = await users.find({ id: { $in: ids } }).project({ password: 0 }).toArray();
+    const map = new Map(usersArr.map((u: any) => [u.id, u]));
+
+    return payments.map((p: any) => ({
+      ...p,
+      fromFirstName: map.get(p.fromUserId)?.firstName,
+      fromLastName: map.get(p.fromUserId)?.lastName,
+      toFirstName: map.get(p.toUserId)?.firstName,
+      toLastName: map.get(p.toUserId)?.lastName,
+    }));
+  });
+}
 
 export const getFinancialChallenges = () => {
-  const stmt = db.prepare(`
-    SELECT fc.*, COUNT(cp.id) as participantCount
-    FROM financial_challenges fc
-    LEFT JOIN challenge_participants cp ON fc.id = cp.challengeId
-    GROUP BY fc.id
-    ORDER BY fc.createdAt DESC
-  `);
-  return stmt.all() as any[];
+  throw new Error("getFinancialChallenges must be used asynchronously via getFinancialChallengesAsync()");
 };
 
+export async function getFinancialChallengesAsync() {
+  return withInit(async () => {
+    const { financial_challenges, challenge_participants } = getCollections();
+    const challenges = await financial_challenges.find({}).sort({ createdAt: -1 }).toArray();
+
+    return await Promise.all(
+      challenges.map(async (c: any) => {
+        const participantCount = await challenge_participants.countDocuments({ challengeId: c.id });
+        return { ...c, participantCount };
+      })
+    );
+  });
+}
+
 export const getChallengeParticipants = (challengeId: string) => {
-  const stmt = db.prepare(`
-    SELECT cp.*, u.firstName, u.lastName
-    FROM challenge_participants cp
-    JOIN users u ON cp.userId = u.id
-    WHERE cp.challengeId = ?
-    ORDER BY cp.progress DESC, cp.joinedAt ASC
-  `);
-  return stmt.all(challengeId) as any[];
+  throw new Error("getChallengeParticipants must be used asynchronously via getChallengeParticipantsAsync()");
 };
+
+export async function getChallengeParticipantsAsync(challengeId: string) {
+  return withInit(async () => {
+    const { challenge_participants, users } = getCollections();
+    const parts = await challenge_participants.find({ challengeId }).toArray();
+    const userIds = parts.map((p: any) => p.userId);
+    const usersArr = await users.find({ id: { $in: userIds } }).project({ password: 0 }).toArray();
+    const map = new Map(usersArr.map((u: any) => [u.id, u]));
+
+    return parts
+      .sort((a: any, b: any) => (b.progress || 0) - (a.progress || 0) || (a.joinedAt || ``).localeCompare(b.joinedAt || ``))
+      .map((p: any) => ({ ...p, firstName: map.get(p.userId)?.firstName, lastName: map.get(p.userId)?.lastName }));
+  });
+}
 
 // Notification Functions
 export const createNotification = (notificationData: {
@@ -771,119 +775,121 @@ export const createNotification = (notificationData: {
   priority?: string;
   metadata?: any;
 }) => {
-  const notificationId = randomUUID();
-  const now = new Date().toISOString();
-
-  const stmt = db.prepare(`
-    INSERT INTO notifications (id, userId, title, message, type, priority, metadata, createdAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  stmt.run(
-    notificationId,
-    notificationData.userId,
-    notificationData.title,
-    notificationData.message,
-    notificationData.type,
-    notificationData.priority || "normal",
-    notificationData.metadata
-      ? JSON.stringify(notificationData.metadata)
-      : null,
-    now,
-  );
-
-  return {
-    id: notificationId,
-    ...notificationData,
-    read: false,
-    createdAt: now,
-  };
+  throw new Error("createNotification must be used asynchronously via createNotificationAsync()");
 };
+
+export async function createNotificationAsync(notificationData: {
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  priority?: string;
+  metadata?: any;
+}) {
+  return withInit(async () => {
+    const { notifications } = getCollections();
+    const notificationId = randomUUID();
+    const now = new Date().toISOString();
+
+    await notifications.insertOne({
+      id: notificationId,
+      userId: notificationData.userId,
+      title: notificationData.title,
+      message: notificationData.message,
+      type: notificationData.type,
+      priority: notificationData.priority || "normal",
+      metadata: notificationData.metadata || null,
+      createdAt: now,
+      read: false,
+    });
+
+    return {
+      id: notificationId,
+      ...notificationData,
+      read: false,
+      createdAt: now,
+    };
+  });
+}
 
 export const getUserNotificationsFromDB = (
   userId: string,
   limit: number = 50,
   unreadOnly: boolean = false,
 ) => {
-  const whereClause = unreadOnly
-    ? "WHERE userId = ? AND read = false"
-    : "WHERE userId = ?";
-  const stmt = db.prepare(`
-    SELECT * FROM notifications
-    ${whereClause}
-    ORDER BY createdAt DESC
-    LIMIT ?
-  `);
-
-  const notifications = stmt.all(userId, limit) as any[];
-  return notifications.map((n) => ({
-    ...n,
-    metadata: n.metadata ? JSON.parse(n.metadata) : undefined,
-  }));
+  throw new Error("getUserNotificationsFromDB must be used asynchronously via getUserNotificationsFromDBAsync()");
 };
+
+export async function getUserNotificationsFromDBAsync(
+  userId: string,
+  limit: number = 50,
+  unreadOnly: boolean = false,
+) {
+  return withInit(async () => {
+    const { notifications } = getCollections();
+    const query = unreadOnly ? { userId, read: false } : { userId };
+    const rows = await notifications.find(query).sort({ createdAt: -1 }).limit(limit).toArray();
+    return rows as any[];
+  });
+}
 
 // Initialize sample data
 export const createSampleChallenges = () => {
-  const challenges = [
-    {
-      id: randomUUID(),
-      title: "30-Day Savings Challenge",
-      description: "Save ₦1,000 more each day for 30 days",
-      targetAmount: 30000,
-      duration: 30,
-      startDate: "2024-12-01",
-      endDate: "2024-12-31",
-      status: "active",
-      category: "savings",
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: randomUUID(),
-      title: "Investment Growth Challenge",
-      description: "Invest ₦50,000 and track your returns over 3 months",
-      targetAmount: 50000,
-      duration: 90,
-      startDate: "2024-12-01",
-      endDate: "2025-03-01",
-      status: "active",
-      category: "investment",
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: randomUUID(),
-      title: "Zero Spending Week",
-      description:
-        "Challenge yourself to spend only on essentials for one week",
-      targetAmount: 0,
-      duration: 7,
-      startDate: "2024-12-16",
-      endDate: "2024-12-23",
-      status: "upcoming",
-      category: "spending",
-      createdAt: new Date().toISOString(),
-    },
-  ];
+  throw new Error("createSampleChallenges must be used asynchronously via createSampleChallengesAsync()");
+};
 
-  const stmt = db.prepare(`
-    INSERT OR IGNORE INTO financial_challenges
-    (id, title, description, targetAmount, duration, startDate, endDate, status, category, createdAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+export async function createSampleChallengesAsync() {
+  return withInit(async () => {
+    const { financial_challenges } = getCollections();
 
-  challenges.forEach((challenge) => {
-    stmt.run(
-      challenge.id,
-      challenge.title,
-      challenge.description,
-      challenge.targetAmount,
-      challenge.duration,
-      challenge.startDate,
-      challenge.endDate,
-      challenge.status,
-      challenge.category,
-      challenge.createdAt,
+    const challenges = [
+      {
+        id: randomUUID(),
+        title: "30-Day Savings Challenge",
+        description: "Save ₦1,000 more each day for 30 days",
+        targetAmount: 30000,
+        duration: 30,
+        startDate: "2024-12-01",
+        endDate: "2024-12-31",
+        status: "active",
+        category: "savings",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: randomUUID(),
+        title: "Investment Growth Challenge",
+        description: "Invest ₦50,000 and track your returns over 3 months",
+        targetAmount: 50000,
+        duration: 90,
+        startDate: "2024-12-01",
+        endDate: "2025-03-01",
+        status: "active",
+        category: "investment",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: randomUUID(),
+        title: "Zero Spending Week",
+        description:
+          "Challenge yourself to spend only on essentials for one week",
+        targetAmount: 0,
+        duration: 7,
+        startDate: "2024-12-16",
+        endDate: "2024-12-23",
+        status: "upcoming",
+        category: "spending",
+        createdAt: new Date().toISOString(),
+      },
+    ];
+
+    await Promise.all(
+      challenges.map((c) =>
+        financial_challenges.updateOne(
+          { id: c.id },
+          { $setOnInsert: c },
+          { upsert: true }
+        )
+      )
     );
   });
-
-  console.log("✅ Sample financial challenges created");
-};
+}

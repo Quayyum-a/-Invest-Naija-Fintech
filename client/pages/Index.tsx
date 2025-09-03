@@ -1,13 +1,5 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   ArrowRight,
   Smartphone,
@@ -18,7 +10,6 @@ import {
   Users,
   Star,
   ChevronRight,
-  Play,
   X,
   CheckCircle,
   Bitcoin,
@@ -26,12 +17,11 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import CryptoTicker from "../components/CryptoTicker";
-import { toast } from "@/hooks/use-toast";
 
 export default function Index() {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
-  const [isDemoOpen, setIsDemoOpen] = useState(false);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -116,99 +106,6 @@ export default function Index() {
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Dialog open={isDemoOpen} onOpenChange={setIsDemoOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="px-8 py-4 text-lg"
-                  >
-                    <Play className="mr-2 w-5 h-5" />
-                    Watch Demo
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>InvestNaija Demo</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="aspect-video bg-gradient-to-br from-naira-green to-green-600 rounded-lg flex items-center justify-center">
-                      <div className="text-center text-white">
-                        <Play className="w-16 h-16 mx-auto mb-4" />
-                        <h3 className="text-xl font-bold mb-2">
-                          InvestNaija Demo
-                        </h3>
-                        <p className="text-green-100">
-                          See how easy investing can be
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-sm">
-                      <div className="p-3 bg-gray-50 rounded-lg text-center">
-                        <div className="w-8 h-8 bg-naira-green rounded-full mx-auto mb-2 flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">
-                            1
-                          </span>
-                        </div>
-                        <p className="font-medium">Sign Up</p>
-                        <p className="text-gray-600 text-xs">
-                          Quick registration
-                        </p>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded-lg text-center">
-                        <div className="w-8 h-8 bg-naira-green rounded-full mx-auto mb-2 flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">
-                            2
-                          </span>
-                        </div>
-                        <p className="font-medium">Fund Wallet</p>
-                        <p className="text-gray-600 text-xs">
-                          Add money easily
-                        </p>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded-lg text-center">
-                        <div className="w-8 h-8 bg-naira-green rounded-full mx-auto mb-2 flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">
-                            3
-                          </span>
-                        </div>
-                        <p className="font-medium">Start Investing</p>
-                        <p className="text-gray-600 text-xs">
-                          Grow your wealth
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex space-x-3">
-                      <Link
-                        to="/register"
-                        onClick={() => setIsDemoOpen(false)}
-                        className="flex-1"
-                      >
-                        <Button className="w-full bg-naira-green hover:bg-green-600 text-white">
-                          Get Started Now
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => {
-                          toast({
-                            title: "Demo Mode Activated!",
-                            description:
-                              "Explore InvestNaija with sample data and features.",
-                          });
-                          setIsDemoOpen(false);
-                          setTimeout(() => {
-                            window.location.href = "/dashboard";
-                          }, 1000);
-                        }}
-                      >
-                        Try Demo
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
             </div>
 
             {/* Trust Indicators */}

@@ -1,9 +1,8 @@
-import { RequestHandler } from "express";
 import { ErrorResponse } from "@shared/api";
 import {
-  getUserWallet,
-  getUserTransactions,
-  getUserInvestments,
+  getUserWalletAsync as getUserWallet,
+  getUserTransactionsAsync as getUserTransactions,
+  getUserInvestmentsAsync as getUserInvestments,
 } from "../data/storage";
 
 interface Achievement {
@@ -180,13 +179,13 @@ const calculateStreak = (transactions: any[]): number => {
 };
 
 // Check and unlock achievements
-const checkAchievements = (userId: string) => {
-  const wallet = getUserWallet(userId);
-  const transactions = getUserTransactions(userId);
-  const investments = getUserInvestments(userId);
+const checkAchievements = async (userId: string) => {
+  const wallet = await getUserWallet(userId);
+  const transactions = await getUserTransactions(userId);
+  const investments = await getUserInvestments(userId);
   const userAchs = userAchievements.get(userId) || [];
 
-  if (!wallet) return [];
+  if (!wallet) return [] as UserAchievement[];
 
   const newAchievements: UserAchievement[] = [];
   const portfolioValue = wallet.totalInvested + wallet.totalReturns;
@@ -294,7 +293,7 @@ const checkAchievements = (userId: string) => {
 };
 
 // Get user achievements
-export const getUserAchievements: RequestHandler = (req, res) => {
+export const getUserAchievements: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -305,7 +304,7 @@ export const getUserAchievements: RequestHandler = (req, res) => {
     }
 
     // Check for new achievements
-    const newAchievements = checkAchievements(userId);
+    const newAchievements = await checkAchievements(userId);
     const userAchs = userAchievements.get(userId) || [];
 
     // Combine achievements with their definitions
@@ -316,14 +315,14 @@ export const getUserAchievements: RequestHandler = (req, res) => {
       return {
         ...userAch,
         ...definition,
-      };
+      } as any;
     });
 
     const completedAchievements = achievementsWithDetails.filter(
-      (ach) => ach.completed,
+      (ach: any) => ach.completed,
     );
     const inProgressAchievements = achievementsWithDetails.filter(
-      (ach) => !ach.completed,
+      (ach: any) => !ach.completed,
     );
 
     res.json({
@@ -335,7 +334,7 @@ export const getUserAchievements: RequestHandler = (req, res) => {
           const definition = achievements.find(
             (ach) => ach.id === newAch.achievementId,
           );
-          return { ...newAch, ...definition };
+          return { ...newAch, ...definition } as any;
         }),
       },
       stats: {
@@ -420,7 +419,7 @@ export const getLeaderboard: RequestHandler = (req, res) => {
 };
 
 // Get user level and progress
-export const getUserLevel: RequestHandler = (req, res) => {
+export const getUserLevel: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -430,7 +429,7 @@ export const getUserLevel: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     const userAchs = userAchievements.get(userId) || [];
 
     if (!wallet) {
@@ -535,7 +534,6 @@ export const claimReward: RequestHandler = (req, res) => {
     // Process reward
     let rewardMessage = "";
     if (achievementDef.reward.type === "bonus") {
-      // Add bonus to wallet (in production, create a transaction)
       rewardMessage = `You received ₦${achievementDef.reward.value} bonus!`;
     } else if (achievementDef.reward.type === "badge") {
       rewardMessage = `You earned the "${achievementDef.reward.value}" badge!`;

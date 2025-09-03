@@ -28,13 +28,13 @@ export class NotificationService {
   constructor(server: HTTPServer) {
     this.io = new SocketIOServer(server, {
       cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:8080",
+        origin: process.env.FRONTEND_URL || process.env.APP_URL || "*",
         methods: ["GET", "POST"],
       },
     });
 
     // Initialize email transporter
-    this.emailTransporter = nodemailer.createTransporter({
+    this.emailTransporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: 587,
       secure: false,

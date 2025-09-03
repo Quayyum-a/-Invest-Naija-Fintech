@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { getSessionUser, getUserById } from "../data/storage";
+import { getSessionUserAsync as getSessionUser, getUserByIdAsync as getUserById } from "../data/storage";
 import { User } from "@shared/api";
 import { env } from "../config/env";
 
@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-export const authenticateToken = (
+export const authenticateToken = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -36,7 +36,7 @@ export const authenticateToken = (
         token,
         env.JWT_SECRET || "fallback-secret",
       ) as any;
-      const user = getUserById(decoded.userId);
+      const user = await getUserById(decoded.userId);
 
       if (!user) {
         return res.status(403).json({
@@ -55,7 +55,7 @@ export const authenticateToken = (
       req.user = user;
     } else {
       // Fallback to session token
-      const user = getSessionUser(token);
+      const user = await getSessionUser(token);
       if (!user) {
         return res.status(403).json({
           success: false,
@@ -74,7 +74,7 @@ export const authenticateToken = (
   }
 };
 
-export const optionalAuth = (
+export const optionalAuth = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -90,13 +90,13 @@ export const optionalAuth = (
           token,
           env.JWT_SECRET || "fallback-secret",
         ) as any;
-        const user = getUserById(decoded.userId);
+        const user = await getUserById(decoded.userId);
         if (user && user.status === "active") {
           req.user = user;
         }
       } else {
         // Session token
-        const user = getSessionUser(token);
+        const user = await getSessionUser(token);
         if (user) {
           req.user = user;
         }

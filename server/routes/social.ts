@@ -1,21 +1,21 @@
 import { RequestHandler } from "express";
 import {
-  createSocialGroup,
-  getUserSocialGroups,
-  getGroupMembers,
-  createMoneyRequest,
-  getUserMoneyRequests,
-  createSocialPayment,
-  getUserSocialPayments,
-  getFinancialChallenges,
-  getChallengeParticipants,
-  createNotification,
-  getUserById,
-  updateWallet,
-  getUserWallet,
-  createTransaction,
+  createSocialGroupAsync as createSocialGroup,
+  getUserSocialGroupsAsync as getUserSocialGroups,
+  getGroupMembersAsync as getGroupMembers,
+  createMoneyRequestAsync as createMoneyRequest,
+  getUserMoneyRequestsAsync as getUserMoneyRequests,
+  createSocialPaymentAsync as createSocialPayment,
+  getUserSocialPaymentsAsync as getUserSocialPayments,
+  getFinancialChallengesAsync as getFinancialChallenges,
+  getChallengeParticipantsAsync as getChallengeParticipants,
+  createNotificationAsync as createNotification,
+  getUserByIdAsync as getUserById,
+  updateWalletAsync as updateWallet,
+  getUserWalletAsync as getUserWallet,
+  createTransactionAsync as createTransaction,
 } from "../data/storage";
-import { getSessionUser } from "../data/storage";
+import { getSessionUserAsync as getSessionUser } from "../data/storage";
 import {
   getUserByEmailOrPhone,
   validateRecipient,
@@ -28,7 +28,7 @@ export const getSocialGroups: RequestHandler = async (req, res) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
-    const user = token ? getSessionUser(token) : null;
+    const user = token ? await getSessionUser(token) : null;
 
     if (!user) {
       return res.status(401).json({
@@ -37,21 +37,23 @@ export const getSocialGroups: RequestHandler = async (req, res) => {
       });
     }
 
-    const groups = getUserSocialGroups(user.id);
-    const groupsWithMembers = groups.map((group) => {
-      const members = getGroupMembers(group.id);
-      return {
-        ...group,
-        members: members.map((member) => ({
-          id: member.userId,
-          name: `${member.firstName} ${member.lastName}`,
-          avatar: "", // TODO: Add avatar support
-          contribution: member.contribution,
-          joinedAt: member.joinedAt,
-          status: member.status,
-        })),
-      };
-    });
+    const groups = await getUserSocialGroups(user.id);
+    const groupsWithMembers = await Promise.all(
+      groups.map(async (group) => {
+        const members = await getGroupMembers(group.id);
+        return {
+          ...group,
+          members: members.map((member) => ({
+            id: member.userId,
+            name: `${member.firstName} ${member.lastName}`,
+            avatar: "",
+            contribution: member.contribution,
+            joinedAt: member.joinedAt,
+            status: member.status,
+          })),
+        };
+      })
+    );
 
     res.json({
       success: true,
@@ -71,7 +73,7 @@ export const createGroup: RequestHandler = async (req, res) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
-    const user = token ? getSessionUser(token) : null;
+    const user = token ? await getSessionUser(token) : null;
 
     if (!user) {
       return res.status(401).json({
@@ -89,7 +91,7 @@ export const createGroup: RequestHandler = async (req, res) => {
       });
     }
 
-    const group = createSocialGroup({
+    const group = await createSocialGroup({
       name,
       description,
       targetAmount: parseFloat(targetAmount),
@@ -99,7 +101,7 @@ export const createGroup: RequestHandler = async (req, res) => {
     });
 
     // Create notification
-    createNotification({
+    await createNotification({
       userId: user.id,
       title: "Group Created",
       message: `You created the group "${name}"`,
@@ -136,7 +138,7 @@ export const getMoneyRequests: RequestHandler = async (req, res) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
-    const user = token ? getSessionUser(token) : null;
+    const user = token ? await getSessionUser(token) : null;
 
     if (!user) {
       return res.status(401).json({
@@ -145,8 +147,8 @@ export const getMoneyRequests: RequestHandler = async (req, res) => {
       });
     }
 
-    const requests = getUserMoneyRequests(user.id);
-    const formattedRequests = requests.map((request) => ({
+    const requests = await getUserMoneyRequests(user.id);
+    const formattedRequests = (requests || []).map((request: any) => ({
       id: request.id,
       from: request.fromUserId,
       to: request.toUserId,
@@ -177,7 +179,7 @@ export const requestMoney: RequestHandler = async (req, res) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
-    const user = token ? getSessionUser(token) : null;
+    const user = token ? await getSessionUser(token) : null;
 
     if (!user) {
       return res.status(401).json({
@@ -233,7 +235,7 @@ export const requestMoney: RequestHandler = async (req, res) => {
     });
 
     // Create notification for recipient
-    createNotification({
+    await createNotification({
       userId: recipient.id,
       title: "Money Request",
       message: `${getUserDisplayName(user)} requested ₦${amount.toLocaleString()}`,
@@ -259,7 +261,7 @@ export const getSocialPayments: RequestHandler = async (req, res) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
-    const user = token ? getSessionUser(token) : null;
+    const user = token ? await getSessionUser(token) : null;
 
     if (!user) {
       return res.status(401).json({
@@ -268,7 +270,7 @@ export const getSocialPayments: RequestHandler = async (req, res) => {
       });
     }
 
-    const payments = getUserSocialPayments(user.id);
+    const payments = await getUserSocialPayments(user.id);
     const formattedPayments = payments.map((payment) => ({
       id: payment.id,
       from: payment.fromUserId,
@@ -300,7 +302,7 @@ export const sendMoney: RequestHandler = async (req, res) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
-    const user = token ? getSessionUser(token) : null;
+    const user = token ? await getSessionUser(token) : null;
 
     if (!user) {
       return res.status(401).json({
@@ -350,7 +352,7 @@ export const sendMoney: RequestHandler = async (req, res) => {
     }
 
     // Check sender's wallet balance
-    const fromWallet = getUserWallet(user.id);
+    const fromWallet = await getUserWallet(user.id);
     if (!fromWallet || fromWallet.balance < amountNum) {
       return res.status(400).json({
         success: false,
@@ -359,7 +361,7 @@ export const sendMoney: RequestHandler = async (req, res) => {
     }
 
     // Get recipient's wallet
-    const toWallet = getUserWallet(recipient.id);
+    const toWallet = await getUserWallet(recipient.id);
     if (!toWallet) {
       return res.status(404).json({
         success: false,
@@ -368,16 +370,16 @@ export const sendMoney: RequestHandler = async (req, res) => {
     }
 
     // Update wallets
-    updateWallet(user.id, {
+    await updateWallet(user.id, {
       balance: fromWallet.balance - amountNum,
     });
 
-    updateWallet(recipient.id, {
+    await updateWallet(recipient.id, {
       balance: toWallet.balance + amountNum,
     });
 
     // Create transaction records
-    createTransaction({
+    await createTransaction({
       userId: user.id,
       type: "transfer_out",
       amount: amountNum,
@@ -391,7 +393,7 @@ export const sendMoney: RequestHandler = async (req, res) => {
       },
     });
 
-    createTransaction({
+    await createTransaction({
       userId: recipient.id,
       type: "transfer_in",
       amount: amountNum,
@@ -406,7 +408,7 @@ export const sendMoney: RequestHandler = async (req, res) => {
     });
 
     // Create social payment record
-    const payment = createSocialPayment({
+    const payment = await createSocialPayment({
       fromUserId: user.id,
       toUserId: recipient.id,
       amount: amountNum,
@@ -416,15 +418,15 @@ export const sendMoney: RequestHandler = async (req, res) => {
     });
 
     // Create notifications
-    createNotification({
+    await createNotification({
       userId: user.id,
       title: "Payment Sent",
       message: `You sent ₦${amountNum.toLocaleString()} to ${to}`,
       type: "payment",
     });
 
-    createNotification({
-      userId: "demo-user-id",
+    await createNotification({
+      userId: recipient.id,
       title: "Payment Received",
       message: `${user.firstName} ${user.lastName} sent you ₦${amountNum.toLocaleString()}`,
       type: "payment",
@@ -446,9 +448,9 @@ export const sendMoney: RequestHandler = async (req, res) => {
 // Get financial challenges
 export const getChallenges: RequestHandler = async (req, res) => {
   try {
-    const challenges = getFinancialChallenges();
-    const challengesWithParticipants = challenges.map((challenge) => {
-      const participants = getChallengeParticipants(challenge.id);
+    const challenges = await getFinancialChallenges();
+    const challengesWithParticipants = await Promise.all(challenges.map(async (challenge) => {
+      const participants = await getChallengeParticipants(challenge.id);
       return {
         ...challenge,
         participants: participants.map((p, index) => ({
@@ -459,7 +461,7 @@ export const getChallenges: RequestHandler = async (req, res) => {
           rank: index + 1,
         })),
       };
-    });
+    }));
 
     res.json({
       success: true,

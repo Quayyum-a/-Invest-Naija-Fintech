@@ -1,12 +1,12 @@
 import { RequestHandler } from "express";
 import { ErrorResponse } from "@shared/api";
 import {
-  getUserWallet,
-  updateWallet,
-  createTransaction,
-  createInvestment,
-  getUserInvestments,
-  updateInvestment,
+  getUserWalletAsync as getUserWallet,
+  updateWalletAsync as updateWallet,
+  createTransactionAsync as createTransaction,
+  createInvestmentAsync as createInvestment,
+  getUserInvestmentsAsync as getUserInvestments,
+  updateInvestmentAsync as updateInvestment,
 } from "../data/storage";
 import { InvestmentService } from "../services/investmentService";
 
@@ -49,7 +49,7 @@ export const getInvestmentProducts: RequestHandler = async (req, res) => {
   }
 };
 
-export const createRoundUpInvestment: RequestHandler = (req, res) => {
+export const createRoundUpInvestment: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -69,7 +69,7 @@ export const createRoundUpInvestment: RequestHandler = (req, res) => {
     }
 
     // Get current wallet
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (!wallet) {
       return res.status(404).json({
         success: false,
@@ -86,7 +86,7 @@ export const createRoundUpInvestment: RequestHandler = (req, res) => {
     }
 
     // Create round-up investment
-    const investment = createInvestment({
+    const investment = await createInvestment({
       userId,
       type: "round_up",
       amount: roundUpAmount,
@@ -94,7 +94,7 @@ export const createRoundUpInvestment: RequestHandler = (req, res) => {
     });
 
     // Create transaction record
-    const transaction = createTransaction({
+    const transaction = await createTransaction({
       userId,
       type: "investment",
       amount: roundUpAmount,
@@ -109,7 +109,7 @@ export const createRoundUpInvestment: RequestHandler = (req, res) => {
     });
 
     // Update wallet balances
-    const updatedWallet = updateWallet(userId, {
+    const updatedWallet = await updateWallet(userId, {
       balance: wallet.balance - roundUpAmount,
       totalInvested: wallet.totalInvested + roundUpAmount,
     });
@@ -130,7 +130,7 @@ export const createRoundUpInvestment: RequestHandler = (req, res) => {
   }
 };
 
-export const withdrawInvestment: RequestHandler = (req, res) => {
+export const withdrawInvestment: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -150,7 +150,7 @@ export const withdrawInvestment: RequestHandler = (req, res) => {
     }
 
     // Get user's investments
-    const investments = getUserInvestments(userId);
+    const investments = await getUserInvestments(userId);
     const investment = investments.find((inv) => inv.id === investmentId);
 
     if (!investment) {
@@ -168,7 +168,7 @@ export const withdrawInvestment: RequestHandler = (req, res) => {
     }
 
     // Get current wallet
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (!wallet) {
       return res.status(404).json({
         success: false,
@@ -177,13 +177,13 @@ export const withdrawInvestment: RequestHandler = (req, res) => {
     }
 
     // Update investment
-    const updatedInvestment = updateInvestment(investmentId, {
+    const updatedInvestment = await updateInvestment(investmentId, {
       currentValue: investment.currentValue - amount,
       status: investment.currentValue - amount <= 0 ? "withdrawn" : "active",
     });
 
     // Create transaction record
-    const transaction = createTransaction({
+    const transaction = await createTransaction({
       userId,
       type: "withdrawal",
       amount,
@@ -196,7 +196,7 @@ export const withdrawInvestment: RequestHandler = (req, res) => {
     });
 
     // Update wallet balances
-    const updatedWallet = updateWallet(userId, {
+    const updatedWallet = await updateWallet(userId, {
       balance: wallet.balance + amount,
       totalInvested: wallet.totalInvested - Math.min(amount, investment.amount),
     });
@@ -217,7 +217,7 @@ export const withdrawInvestment: RequestHandler = (req, res) => {
   }
 };
 
-export const getInvestmentPerformance: RequestHandler = (req, res) => {
+export const getInvestmentPerformance: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -227,7 +227,7 @@ export const getInvestmentPerformance: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const investments = getUserInvestments(userId);
+    const investments = await getUserInvestments(userId);
 
     // Calculate performance metrics
     const totalInvested = investments.reduce((sum, inv) => sum + inv.amount, 0);

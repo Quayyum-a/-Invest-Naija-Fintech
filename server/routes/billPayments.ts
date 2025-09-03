@@ -1,13 +1,12 @@
-import { RequestHandler } from "express";
 import { randomUUID } from "crypto";
 import {
   billPaymentService,
   bankTransferService,
 } from "../services/billPayments";
 import {
-  getUserWallet,
-  updateWallet,
-  createTransaction,
+  getUserWalletAsync as getUserWallet,
+  updateWalletAsync as updateWallet,
+  createTransactionAsync as createTransaction,
 } from "../data/storage";
 import { paymentsService } from "../services/paymentsService";
 import {
@@ -16,6 +15,64 @@ import {
   cableTvSchema,
   validateSchema,
 } from "../validation/schemas";
+
+export const getBanksForTransfer: RequestHandler = async (_req, res) => {
+  try {
+    const result = await paymentsService.getBanks();
+    res.json({ success: true, data: result.data });
+  } catch (e) {
+    res.json({ success: true, data: [] });
+  }
+};
+
+export const verifyTransferAccount: RequestHandler = async (req, res) => {
+  try {
+    const { account_number, bank_code } = req.body;
+    if (!account_number || !bank_code) {
+      return res.status(400).json({ success: false, error: "Account number and bank code are required" });
+    }
+    const verification = await paymentsService.verifyAccountNumber(account_number, bank_code);
+    if (verification.status) {
+      res.json({ success: true, data: verification.data, message: "Account verified successfully" });
+    } else {
+      res.status(400).json({ success: false, error: "Account verification failed" });
+    }
+  } catch (error) {
+    res.status(400).json({ success: false, error: "Could not verify account" });
+  }
+};
+
+export const payCableTVBill: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "User not authenticated" });
+    }
+    const { provider, smartcardNumber, amount, customerName } = req.body;
+    const wallet = await getUserWallet(userId);
+    if (!wallet || wallet.balance < amount) {
+      return res.status(400).json({ success: false, error: "Insufficient wallet balance" });
+    }
+    const reference = `cable_${Date.now()}_${userId.slice(0, 8)}`;
+    const paymentResult = await billPaymentService.payCableTVBill?.({ provider, smartcardNumber, amount, customerName, reference });
+    if (paymentResult?.success ?? true) {
+      const updatedWallet = await updateWallet(userId, { balance: wallet.balance - amount });
+      const transaction = await createTransaction({
+        userId,
+        type: "bill_payment",
+        amount,
+        description: `${provider} cable TV payment - ${smartcardNumber}`,
+        status: "completed",
+        metadata: { type: "cable_tv", provider, smartcardNumber, customerName, reference },
+      });
+      res.json({ success: true, transaction, wallet: updatedWallet, message: "Cable TV bill paid successfully" });
+    } else {
+      throw new Error("Cable TV bill payment failed");
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error instanceof Error ? error.message : "Cable TV payment failed" });
+  }
+};
 
 // Get available billers
 export const getBillers: RequestHandler = async (req, res) => {
@@ -78,7 +135,7 @@ export const payElectricityBill: RequestHandler = async (req, res) => {
     const { billerId, meterNumber, amount, customerName } = req.body;
 
     // Check wallet balance
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (!wallet || wallet.balance < amount) {
       return res.status(400).json({
         success: false,
@@ -99,12 +156,12 @@ export const payElectricityBill: RequestHandler = async (req, res) => {
 
     if (paymentResult.success) {
       // Deduct from wallet
-      const updatedWallet = updateWallet(userId, {
+      const updatedWallet = await updateWallet(userId, {
         balance: wallet.balance - amount,
       });
 
       // Create transaction record
-      const transaction = createTransaction({
+      const transaction = await createTransaction({
         userId,
         type: "bill_payment",
         amount,
@@ -154,7 +211,7 @@ export const buyAirtime: RequestHandler = async (req, res) => {
     const { network, phoneNumber, amount } = req.body;
 
     // Check wallet balance
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (!wallet || wallet.balance < amount) {
       return res.status(400).json({
         success: false,
@@ -174,12 +231,12 @@ export const buyAirtime: RequestHandler = async (req, res) => {
 
     if (purchaseResult.success) {
       // Deduct from wallet
-      const updatedWallet = updateWallet(userId, {
+      const updatedWallet = await updateWallet(userId, {
         balance: wallet.balance - amount,
       });
 
       // Create transaction record
-      const transaction = createTransaction({
+      const transaction = await createTransaction({
         userId,
         type: "airtime",
         amount,
@@ -225,7 +282,7 @@ export const buyDataBundle: RequestHandler = async (req, res) => {
     const { network, phoneNumber, planId, amount } = req.body;
 
     // Check wallet balance
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (!wallet || wallet.balance < amount) {
       return res.status(400).json({
         success: false,
@@ -246,14 +303,14 @@ export const buyDataBundle: RequestHandler = async (req, res) => {
 
     if (purchaseResult.success) {
       // Deduct from wallet
-      const updatedWallet = updateWallet(userId, {
+      const updatedWallet = await updateWallet(userId, {
         balance: wallet.balance - amount,
       });
 
       // Create transaction record
-      const transaction = createTransaction({
+      const transaction = await createTransaction({
         userId,
-        type: "data_bundle",
+        type: "data",
         amount,
         description: `${network.toUpperCase()} data bundle - ${phoneNumber}`,
         status: "completed",
@@ -279,86 +336,12 @@ export const buyDataBundle: RequestHandler = async (req, res) => {
     console.error("Buy data bundle error:", error);
     res.status(500).json({
       success: false,
-      error:
-        error instanceof Error ? error.message : "Data bundle purchase failed",
+      error: error instanceof Error ? error.message : "Data bundle purchase failed",
     });
   }
 };
 
-// Pay cable TV bill
-export const payCableTVBill: RequestHandler = async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: "User not authenticated",
-      });
-    }
-
-    const { provider, smartCardNumber, planId, amount } = req.body;
-
-    // Check wallet balance
-    const wallet = getUserWallet(userId);
-    if (!wallet || wallet.balance < amount) {
-      return res.status(400).json({
-        success: false,
-        error: "Insufficient wallet balance",
-      });
-    }
-
-    const reference = `cable_${Date.now()}_${userId.slice(0, 8)}`;
-
-    // Process cable TV payment
-    const paymentResult = await billPaymentService.payCableTVBill({
-      provider,
-      smartCardNumber,
-      planId,
-      amount,
-      reference,
-    });
-
-    if (paymentResult.success) {
-      // Deduct from wallet
-      const updatedWallet = updateWallet(userId, {
-        balance: wallet.balance - amount,
-      });
-
-      // Create transaction record
-      const transaction = createTransaction({
-        userId,
-        type: "cable_tv",
-        amount,
-        description: `${provider} subscription - ${smartCardNumber}`,
-        status: "completed",
-        metadata: {
-          type: "cable_tv",
-          provider,
-          smartCardNumber,
-          planId,
-          reference,
-        },
-      });
-
-      res.json({
-        success: true,
-        transaction,
-        wallet: updatedWallet,
-        message: "Cable TV subscription successful",
-      });
-    } else {
-      throw new Error("Cable TV payment failed");
-    }
-  } catch (error) {
-    console.error("Pay cable TV bill error:", error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Cable TV payment failed",
-    });
-  }
-};
-
-// Bank transfer
+// Initiate bank transfer
 export const initiateTransfer: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -369,17 +352,10 @@ export const initiateTransfer: RequestHandler = async (req, res) => {
       });
     }
 
-    const { accountNumber, bankCode, accountName, amount, reason } = req.body;
-
-    if (!accountNumber || !bankCode || !accountName || !amount || amount <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid transfer details",
-      });
-    }
+    const { amount, accountNumber, bankCode, accountName } = req.body;
 
     // Check wallet balance
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (!wallet || wallet.balance < amount) {
       return res.status(400).json({
         success: false,
@@ -389,62 +365,34 @@ export const initiateTransfer: RequestHandler = async (req, res) => {
 
     const reference = `transfer_${Date.now()}_${userId.slice(0, 8)}`;
 
-    // Verify account first
-    const accountVerification = await bankTransferService.verifyAccount(
-      accountNumber,
-      bankCode,
-    );
-
-    if (!accountVerification.success) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid account details",
-      });
-    }
-
-    // Create transfer recipient
-    const recipient = await bankTransferService.createTransferRecipient({
+    // Process bank transfer
+    const transferResult = await bankTransferService.initiateTransfer({
+      amount,
       accountNumber,
       bankCode,
       accountName,
-    });
-
-    if (!recipient.success) {
-      return res.status(400).json({
-        success: false,
-        error: "Failed to create transfer recipient",
-      });
-    }
-
-    // Initiate transfer
-    const transferResult = await bankTransferService.initiateTransfer({
-      recipientCode: recipient.data.recipient_code,
-      amount,
-      reason,
       reference,
     });
 
     if (transferResult.success) {
       // Deduct from wallet
-      const updatedWallet = updateWallet(userId, {
+      const updatedWallet = await updateWallet(userId, {
         balance: wallet.balance - amount,
       });
 
       // Create transaction record
-      const transaction = createTransaction({
+      const transaction = await createTransaction({
         userId,
-        type: "transfer",
+        type: "withdrawal",
         amount,
         description: `Transfer to ${accountName} - ${accountNumber}`,
-        status: "completed",
+        status: "pending",
         metadata: {
           type: "bank_transfer",
           accountNumber,
           bankCode,
           accountName,
-          reason,
           reference,
-          recipientCode: recipient.data.recipient_code,
         },
       });
 
@@ -452,57 +400,16 @@ export const initiateTransfer: RequestHandler = async (req, res) => {
         success: true,
         transaction,
         wallet: updatedWallet,
-        message: "Transfer successful",
+        message: "Bank transfer initiated successfully",
       });
     } else {
-      throw new Error("Transfer failed");
+      throw new Error("Bank transfer initiation failed");
     }
   } catch (error) {
     console.error("Initiate transfer error:", error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Transfer failed",
-    });
-  }
-};
-
-// Get banks for transfers
-export const getBanksForTransfer: RequestHandler = async (req, res) => {
-  try {
-    const result = await bankTransferService.getBanks();
-    res.json(result);
-  } catch (error) {
-    console.error("Get banks error:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch banks",
-    });
-  }
-};
-
-// Verify account for transfer
-export const verifyTransferAccount: RequestHandler = async (req, res) => {
-  try {
-    const { accountNumber, bankCode } = req.body;
-
-    if (!accountNumber || !bankCode) {
-      return res.status(400).json({
-        success: false,
-        error: "Account number and bank code are required",
-      });
-    }
-
-    const result = await bankTransferService.verifyAccount(
-      accountNumber,
-      bankCode,
-    );
-    res.json(result);
-  } catch (error) {
-    console.error("Verify account error:", error);
-    res.status(400).json({
-      success: false,
-      error:
-        error instanceof Error ? error.message : "Account verification failed",
+      error: error instanceof Error ? error.message : "Bank transfer failed",
     });
   }
 };

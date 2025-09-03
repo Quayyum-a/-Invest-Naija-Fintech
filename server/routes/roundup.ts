@@ -1,11 +1,10 @@
-import { RequestHandler } from "express";
 import { ErrorResponse } from "@shared/api";
 import {
-  getUserWallet,
-  updateWallet,
-  createTransaction,
-  createInvestment,
-  getUserById,
+  getUserWalletAsync as getUserWallet,
+  updateWalletAsync as updateWallet,
+  createTransactionAsync as createTransaction,
+  createInvestmentAsync as createInvestment,
+  getUserByIdAsync as getUserById,
 } from "../data/storage";
 
 // Round-up settings storage (use database in production)
@@ -102,7 +101,7 @@ export const updateRoundupSettings: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const currentSettings = roundupSettings.get(userId) || {};
+    const currentSettings = roundupSettings.get(userId) || {} as any;
     const newSettings = {
       ...currentSettings,
       ...(enabled !== undefined && { enabled }),
@@ -110,7 +109,7 @@ export const updateRoundupSettings: RequestHandler = (req, res) => {
       ...(autoInvestThreshold && { autoInvestThreshold }),
       ...(targetInvestmentType && { targetInvestmentType }),
       ...(maxDailyRoundup && { maxDailyRoundup }),
-    };
+    } as any;
 
     roundupSettings.set(userId, newSettings);
 
@@ -186,13 +185,8 @@ export const processRoundup: RequestHandler = async (req, res) => {
       });
     }
 
-    // Check daily round-up limit
-    const today = new Date().toDateString();
-    const dailyRoundupKey = `${userId}_${today}`;
-    // In production, store this in database with proper date queries
-
     // Get wallet and check balance
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (!wallet) {
       return res.status(404).json({
         success: false,
@@ -208,7 +202,7 @@ export const processRoundup: RequestHandler = async (req, res) => {
     }
 
     // Create round-up transaction
-    const roundupTransaction = createTransaction({
+    const roundupTransaction = await createTransaction({
       userId,
       type: "withdrawal",
       amount: roundupAmount,
@@ -223,7 +217,7 @@ export const processRoundup: RequestHandler = async (req, res) => {
     });
 
     // Update wallet balance
-    updateWallet(userId, {
+    await updateWallet(userId, {
       balance: wallet.balance - roundupAmount,
     });
 
@@ -231,14 +225,14 @@ export const processRoundup: RequestHandler = async (req, res) => {
     const currentRoundupBalance = roundupAmount; // In production, sum all pending roundups
     if (currentRoundupBalance >= settings.autoInvestThreshold) {
       // Auto-invest the accumulated round-ups
-      const investment = createInvestment({
+      const investment = await createInvestment({
         userId,
         type: settings.targetInvestmentType,
         amount: currentRoundupBalance,
         status: "active",
       });
 
-      const investmentTransaction = createTransaction({
+      const investmentTransaction = await createTransaction({
         userId,
         type: "investment",
         amount: currentRoundupBalance,
@@ -252,7 +246,7 @@ export const processRoundup: RequestHandler = async (req, res) => {
       });
 
       // Update wallet
-      updateWallet(userId, {
+      await updateWallet(userId, {
         totalInvested: wallet.totalInvested + currentRoundupBalance,
       });
 
@@ -319,7 +313,7 @@ export const getRoundupStats: RequestHandler = (req, res) => {
 };
 
 // Manual round-up investment
-export const investRoundups: RequestHandler = (req, res) => {
+export const investRoundups: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -342,14 +336,14 @@ export const investRoundups: RequestHandler = (req, res) => {
     }
 
     // Create investment
-    const investment = createInvestment({
+    const investment = await createInvestment({
       userId,
       type: investmentType,
       amount: pendingRoundupAmount,
       status: "active",
     });
 
-    const transaction = createTransaction({
+    const transaction = await createTransaction({
       userId,
       type: "investment",
       amount: pendingRoundupAmount,
@@ -363,9 +357,9 @@ export const investRoundups: RequestHandler = (req, res) => {
     });
 
     // Update wallet
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (wallet) {
-      updateWallet(userId, {
+      await updateWallet(userId, {
         totalInvested: wallet.totalInvested + pendingRoundupAmount,
       });
     }

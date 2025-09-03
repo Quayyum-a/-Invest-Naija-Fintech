@@ -8,13 +8,13 @@ import {
   ErrorResponse,
 } from "@shared/api";
 import {
-  getUserWallet,
-  updateWallet,
-  createTransaction,
-  getUserTransactions,
-  getUserInvestments,
-  createInvestment,
-  updateTransaction,
+  getUserWalletAsync as getUserWallet,
+  updateWalletAsync as updateWallet,
+  createTransactionAsync as createTransaction,
+  getUserTransactionsAsync as getUserTransactions,
+  getUserInvestmentsAsync as getUserInvestments,
+  createInvestmentAsync as createInvestment,
+  updateTransactionAsync as updateTransaction,
 } from "../data/storage";
 import { walletService } from "../services/walletService";
 import { paymentsService } from "../services/paymentsService";
@@ -32,7 +32,7 @@ import {
   canReceiveMoney,
 } from "../data/userLookup";
 
-export const getWallet: RequestHandler = (req, res) => {
+export const getWallet: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -42,7 +42,7 @@ export const getWallet: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (!wallet) {
       return res.status(404).json({
         success: false,
@@ -79,7 +79,7 @@ export const processDeposit: RequestHandler = (req, res) => {
   }
 };
 
-export const withdrawMoney: RequestHandler = (req, res) => {
+export const withdrawMoney: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -103,7 +103,7 @@ export const withdrawMoney: RequestHandler = (req, res) => {
     }
 
     // Get current wallet
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (!wallet) {
       return res.status(404).json({
         success: false,
@@ -120,7 +120,7 @@ export const withdrawMoney: RequestHandler = (req, res) => {
     }
 
     // Create transaction record
-    const transaction = createTransaction({
+    const transaction = await createTransaction({
       userId,
       type: "withdrawal",
       amount,
@@ -130,7 +130,7 @@ export const withdrawMoney: RequestHandler = (req, res) => {
     });
 
     // Update wallet balance
-    const updatedWallet = updateWallet(userId, {
+    const updatedWallet = await updateWallet(userId, {
       balance: wallet.balance - amount,
     });
 
@@ -149,7 +149,7 @@ export const withdrawMoney: RequestHandler = (req, res) => {
   }
 };
 
-export const investMoney: RequestHandler = (req, res) => {
+export const investMoney: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId || !req.user) {
@@ -208,7 +208,7 @@ export const investMoney: RequestHandler = (req, res) => {
     }
 
     // Get current wallet
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (!wallet) {
       return res.status(404).json({
         success: false,
@@ -234,7 +234,7 @@ export const investMoney: RequestHandler = (req, res) => {
     const expectedAnnualReturn = amount * returnRates[investmentType];
 
     // Create investment record
-    const investment = createInvestment({
+    const investment = await createInvestment({
       userId,
       type: investmentType,
       amount,
@@ -242,7 +242,7 @@ export const investMoney: RequestHandler = (req, res) => {
     });
 
     // Create transaction record
-    const transaction = createTransaction({
+    const transaction = await createTransaction({
       userId,
       type: "investment",
       amount,
@@ -258,7 +258,7 @@ export const investMoney: RequestHandler = (req, res) => {
     });
 
     // Update wallet balances
-    const updatedWallet = updateWallet(userId, {
+    const updatedWallet = await updateWallet(userId, {
       balance: wallet.balance - amount,
       totalInvested: wallet.totalInvested + amount,
     });
@@ -280,7 +280,7 @@ export const investMoney: RequestHandler = (req, res) => {
   }
 };
 
-export const getTransactions: RequestHandler = (req, res) => {
+export const getTransactions: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -293,7 +293,7 @@ export const getTransactions: RequestHandler = (req, res) => {
     const limit = req.query.limit
       ? parseInt(req.query.limit as string)
       : undefined;
-    const transactions = getUserTransactions(userId, limit);
+    const transactions = await getUserTransactions(userId, limit);
 
     res.json({
       success: true,
@@ -308,7 +308,7 @@ export const getTransactions: RequestHandler = (req, res) => {
   }
 };
 
-export const getDashboardData: RequestHandler = (req, res) => {
+export const getDashboardData: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId || !req.user) {
@@ -318,9 +318,9 @@ export const getDashboardData: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const wallet = getUserWallet(userId);
-    const recentTransactions = getUserTransactions(userId, 5);
-    const recentInvestments = getUserInvestments(userId).slice(0, 3);
+    const wallet = await getUserWallet(userId);
+    const recentTransactions = await getUserTransactions(userId, 5);
+    const recentInvestments = await getUserInvestments(userId).slice(0, 3);
 
     if (!wallet) {
       return res.status(404).json({
@@ -379,7 +379,7 @@ export const getDashboardData: RequestHandler = (req, res) => {
   }
 };
 
-export const getPortfolioData: RequestHandler = (req, res) => {
+export const getPortfolioData: RequestHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -389,8 +389,8 @@ export const getPortfolioData: RequestHandler = (req, res) => {
       } as ErrorResponse);
     }
 
-    const wallet = getUserWallet(userId);
-    const investments = getUserInvestments(userId);
+    const wallet = await getUserWallet(userId);
+    const investments = await getUserInvestments(userId);
 
     if (!wallet) {
       return res.status(404).json({

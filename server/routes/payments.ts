@@ -1,4 +1,3 @@
-import { RequestHandler } from "express";
 import { randomUUID } from "crypto";
 import {
   paystackService,
@@ -8,10 +7,10 @@ import {
   validateNIN,
 } from "../services/payments";
 import {
-  getUserWallet,
-  updateWallet,
-  createTransaction,
-  updateUser,
+  getUserWalletAsync as getUserWallet,
+  updateWalletAsync as updateWallet,
+  createTransactionAsync as createTransaction,
+  updateUserAsync as updateUser,
 } from "../data/storage";
 
 // Get Nigerian banks from Paystack
@@ -169,7 +168,7 @@ export const verifyPaystackPayment: RequestHandler = async (req, res) => {
       const amount = verification.data.amount / 100; // Convert from kobo
 
       // Get current wallet
-      const wallet = getUserWallet(userId);
+      const wallet = await getUserWallet(userId);
       if (!wallet) {
         return res.status(404).json({
           success: false,
@@ -178,7 +177,7 @@ export const verifyPaystackPayment: RequestHandler = async (req, res) => {
       }
 
       // Create transaction record
-      const transaction = createTransaction({
+      const transaction = await createTransaction({
         userId,
         type: "deposit",
         amount,
@@ -192,7 +191,7 @@ export const verifyPaystackPayment: RequestHandler = async (req, res) => {
       });
 
       // Update wallet balance
-      const updatedWallet = updateWallet(userId, {
+      const updatedWallet = await updateWallet(userId, {
         balance: wallet.balance + amount,
       });
 
@@ -245,7 +244,7 @@ export const initiateBankTransfer: RequestHandler = async (req, res) => {
     }
 
     // Check wallet balance
-    const wallet = getUserWallet(userId);
+    const wallet = await getUserWallet(userId);
     if (!wallet || wallet.balance < amount) {
       return res.status(400).json({
         success: false,
@@ -299,7 +298,7 @@ export const initiateBankTransfer: RequestHandler = async (req, res) => {
 
     if (transfer.status) {
       // Create transaction record
-      const transaction = createTransaction({
+      const transaction = await createTransaction({
         userId,
         type: "withdrawal",
         amount,
@@ -316,7 +315,7 @@ export const initiateBankTransfer: RequestHandler = async (req, res) => {
       });
 
       // Update wallet balance (deduct amount)
-      const updatedWallet = updateWallet(userId, {
+      const updatedWallet = await updateWallet(userId, {
         balance: wallet.balance - amount,
       });
 
@@ -403,7 +402,7 @@ export const verifyBVN: RequestHandler = async (req, res) => {
 
     if (verification.valid) {
       // Update user with BVN
-      const updatedUser = updateUser(userId, {
+      const updatedUser = await updateUser(userId, {
         bvn,
         kycStatus: "verified",
       });
@@ -453,7 +452,7 @@ export const verifyNIN: RequestHandler = async (req, res) => {
 
     if (verification.valid) {
       // Update user with NIN
-      const updatedUser = updateUser(userId, {
+      const updatedUser = await updateUser(userId, {
         nin,
         kycStatus: "verified",
       });
