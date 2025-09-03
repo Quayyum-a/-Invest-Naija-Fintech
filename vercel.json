@@ -4,11 +4,9 @@
   "outputDirectory": "dist/spa",
   "installCommand": "npm install",
   "framework": null,
-  "functions": {
-    "api/**/*.{js,ts}": {
-      "runtime": "@vercel/node@canary"
-    }
-  },
+  "builds": [
+    { "src": "api/**/*.ts", "use": "@vercel/node@2.16.1" }
+  ],
   "env": {
     "NODE_ENV": "production"
   },
