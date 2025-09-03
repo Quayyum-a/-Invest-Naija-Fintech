@@ -5,8 +5,8 @@
   "installCommand": "npm install",
   "framework": null,
   "functions": {
-    "api/**/*.ts": {
-      "runtime": "@vercel/node@3.0.31"
+    "api/**/*.{js,ts}": {
+      "runtime": "nodejs20.x"
     }
   },
   "env": {
