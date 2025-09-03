@@ -4,20 +4,16 @@
   "outputDirectory": "dist/spa",
   "installCommand": "npm install",
   "framework": null,
-  "builds": [
-    { "src": "api/**/*.ts", "use": "@vercel/node@2.16.1" }
-  ],
+  "functions": {
+    "api/**/*.{js,ts}": {
+      "runtime": "nodejs20.x"
+    }
+  },
   "env": {
     "NODE_ENV": "production"
   },
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
