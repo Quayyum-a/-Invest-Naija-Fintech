@@ -1,9 +1,11 @@
 import { randomUUID } from "crypto";
 import { connectMongo, getCollections } from "../database/mongo";
 import { User, UserWallet, Transaction, Investment } from "@shared/api";
+import { supabase, isSupabaseEnabled } from "../lib/supabase";
 
 let initialized = false;
 let useMemory = false;
+let useSupabase = false;
 
 // In-memory fallback stores (dev-only)
 const memory = {
@@ -14,10 +16,34 @@ const memory = {
 
 async function init() {
   if (initialized) return;
+  if (isSupabaseEnabled && supabase) {
+    try {
+      const probe = await supabase.from("users").select("id", { head: true, count: "exact" }).limit(1);
+      if (probe.error && !String(probe.error.message || "").includes("relation")) {
+        throw probe.error;
+      }
+      if (!probe.error || String(probe.error.message || "").includes("relation")) {
+        // If relation missing, we still don't use Supabase (no schema). Otherwise, enable it.
+        useSupabase = !probe.error;
+      }
+    } catch (e) {
+      useSupabase = false;
+    }
+    if (useSupabase) {
+      useMemory = false;
+      initialized = true;
+      return;
+    }
+    console.warn("Supabase not ready (schema missing). Falling back to alternate storage.");
+  }
   try {
     await connectMongo();
+    useMemory = false;
   } catch (e) {
-    throw new Error("Database connection failed. Set MONGO_URI or DATABASE_URL for production deployment.");
+    console.warn(
+      "No database configured or connection failed. Falling back to in-memory storage for this session.",
+    );
+    useMemory = true;
   }
   initialized = true;
 }
@@ -72,6 +98,40 @@ export async function createUserAsync(userData: {
       createdAt: now,
     };
 
+    if (useSupabase) {
+      const { data: existing, error: existErr } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", user.email)
+        .maybeSingle();
+      if (existErr && existErr.code !== "PGRST116") throw existErr;
+      if (existing) throw new Error("User with this email already exists");
+
+      const { error: insertErr } = await supabase.from("users").insert({
+        id: userId,
+        email: user.email,
+        phone: user.phone,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        kycStatus: user.kycStatus,
+        status: user.status,
+        role: user.role,
+        createdAt: now,
+        password: userData.password,
+      });
+      if (insertErr) throw insertErr;
+
+      const { error: walletErr } = await supabase.from("wallets").insert({
+        userId,
+        balance: 0,
+        totalInvested: 0,
+        totalReturns: 0,
+        lastUpdated: now,
+      });
+      if (walletErr) throw walletErr;
+      return user;
+    }
+
     if (useMemory) {
       if (memory.users.find((u) => u.email === user.email)) {
         throw new Error("User with this email already exists");
@@ -107,6 +167,17 @@ export const getUserByEmail = (email: string): (User & { password: string }) | n
 
 export async function getUserByEmailAsync(email: string): Promise<(User & { password: string }) | null> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data: doc, error } = await supabase
+        .from("users")
+        .select("id,email,phone,firstName,lastName,kycStatus,status,role,createdAt,lastLogin,password")
+        .eq("email", email)
+        .maybeSingle();
+      if (error) throw error;
+      if (!doc) return null as any;
+      const { password, ...rest } = doc as any;
+      return { ...(rest as User), password } as any;
+    }
     if (useMemory) {
       const doc = memory.users.find((u) => u.email === email);
       if (!doc) return null as any;
@@ -127,6 +198,15 @@ export const getUserById = (userId: string): User | null => {
 
 export async function getUserByIdAsync(userId: string): Promise<User | null> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data: doc, error } = await supabase
+        .from("users")
+        .select("id,email,phone,firstName,lastName,kycStatus,status,role,createdAt,lastLogin")
+        .eq("id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return (doc as any) || null;
+    }
     if (useMemory) {
       const doc = memory.users.find((u) => u.id === userId);
       if (!doc) return null;
@@ -147,6 +227,17 @@ export const updateUser = (userId: string, updates: Partial<User>): User | null 
 
 export async function updateUserAsync(userId: string, updates: Partial<User>): Promise<User | null> {
   return withInit(async () => {
+    if (useSupabase) {
+      const updatesClean: any = { ...updates };
+      const { data, error } = await supabase
+        .from("users")
+        .update(updatesClean)
+        .eq("id", userId)
+        .select("id,email,phone,firstName,lastName,kycStatus,status,role,createdAt,lastLogin")
+        .single();
+      if (error) throw error;
+      return data as any;
+    }
     if (useMemory) {
       const idx = memory.users.findIndex((u) => u.id === userId);
       if (idx === -1) return null;
@@ -191,6 +282,14 @@ export async function createSessionAsync(userId: string): Promise<string> {
   return withInit(async () => {
     const token = randomUUID();
     const now = new Date().toISOString();
+    if (useSupabase) {
+      const { error: sErr } = await supabase
+        .from("user_sessions")
+        .insert({ token, userId, createdAt: now });
+      if (sErr) throw sErr;
+      await supabase.from("users").update({ lastLogin: now }).eq("id", userId);
+      return token;
+    }
     if (useMemory) {
       memory.sessions.set(token, { token, userId, createdAt: now });
       const idx = memory.users.findIndex((u) => u.id === userId);
@@ -210,6 +309,22 @@ export const getSessionUser = (token: string): User | null => {
 
 export async function getSessionUserAsync(token: string): Promise<User | null> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data: session, error: sErr } = await supabase
+        .from("user_sessions")
+        .select("userId")
+        .eq("token", token)
+        .maybeSingle();
+      if (sErr) throw sErr;
+      if (!session) return null;
+      const { data: user, error: uErr } = await supabase
+        .from("users")
+        .select("id,email,phone,firstName,lastName,kycStatus,status,role,createdAt,lastLogin")
+        .eq("id", (session as any).userId)
+        .maybeSingle();
+      if (uErr) throw uErr;
+      return (user as any) || null;
+    }
     if (useMemory) {
       const session = memory.sessions.get(token);
       if (!session) return null;
@@ -234,6 +349,11 @@ export const deleteSession = (token: string): boolean => {
 
 export async function deleteSessionAsync(token: string): Promise<boolean> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { error } = await supabase.from("user_sessions").delete().eq("token", token);
+      if (error) throw error;
+      return true;
+    }
     if (useMemory) {
       const existed = memory.sessions.delete(token);
       return existed;
@@ -251,6 +371,15 @@ export const getUserWallet = (userId: string): UserWallet | null => {
 
 export async function getUserWalletAsync(userId: string): Promise<UserWallet | null> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data, error } = await supabase
+        .from("wallets")
+        .select("userId,balance,totalInvested,totalReturns,lastUpdated")
+        .eq("userId", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as any) || null;
+    }
     if (useMemory) {
       return (memory.wallets.get(userId) as any) || null;
     }
@@ -272,6 +401,16 @@ export async function updateWalletAsync(
 ): Promise<UserWallet | null> {
   return withInit(async () => {
     const now = new Date().toISOString();
+    if (useSupabase) {
+      const { data, error } = await supabase
+        .from("wallets")
+        .update({ ...updates, lastUpdated: now })
+        .eq("userId", userId)
+        .select("userId,balance,totalInvested,totalReturns,lastUpdated")
+        .single();
+      if (error) throw error;
+      return data as any;
+    }
     if (useMemory) {
       const w = memory.wallets.get(userId);
       if (!w) return null;
@@ -300,7 +439,6 @@ export async function createTransactionAsync(
   transactionData: Omit<Transaction, "id" | "createdAt">,
 ): Promise<Transaction> {
   return withInit(async () => {
-    const { transactions } = getCollections();
     const transactionId = randomUUID();
     const now = new Date().toISOString();
     const transaction: Transaction = {
@@ -308,6 +446,12 @@ export async function createTransactionAsync(
       id: transactionId,
       createdAt: now,
     };
+    if (useSupabase) {
+      const { error } = await supabase.from("transactions").insert(transaction as any);
+      if (error) throw error;
+      return transaction;
+    }
+    const { transactions } = getCollections();
     await transactions.insertOne({ ...transaction });
     return transaction;
   });
@@ -325,6 +469,16 @@ export async function getUserTransactionsAsync(
   limit: number = 50,
 ): Promise<Transaction[]> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("userId", userId)
+        .order("createdAt", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data as any) || [];
+    }
     const { transactions } = getCollections();
     const rows = await transactions
       .find({ userId })
@@ -341,6 +495,15 @@ export const getTransaction = (transactionId: string): Transaction | null => {
 
 export async function getTransactionAsync(transactionId: string): Promise<Transaction | null> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("id", transactionId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as any) || null;
+    }
     const { transactions } = getCollections();
     return (await transactions.findOne({ id: transactionId })) as any;
   });
@@ -358,6 +521,16 @@ export async function updateTransactionAsync(
   updates: Partial<Transaction>,
 ): Promise<Transaction | null> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data, error } = await supabase
+        .from("transactions")
+        .update(updates as any)
+        .eq("id", transactionId)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data as any;
+    }
     const { transactions } = getCollections();
     const res = await transactions.findOneAndUpdate(
       { id: transactionId },
@@ -379,7 +552,6 @@ export async function createInvestmentAsync(
   investmentData: Omit<Investment, "id" | "createdAt" | "currentValue" | "returns">,
 ): Promise<Investment> {
   return withInit(async () => {
-    const { investments } = getCollections();
     const investmentId = randomUUID();
     const now = new Date().toISOString();
     const investment: Investment = {
@@ -389,6 +561,12 @@ export async function createInvestmentAsync(
       returns: 0,
       createdAt: now,
     };
+    if (useSupabase) {
+      const { error } = await supabase.from("investments").insert(investment as any);
+      if (error) throw error;
+      return investment;
+    }
+    const { investments } = getCollections();
     await investments.insertOne(investment as any);
     return investment;
   });
@@ -400,6 +578,15 @@ export const getUserInvestments = (userId: string): Investment[] => {
 
 export async function getUserInvestmentsAsync(userId: string): Promise<Investment[]> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data, error } = await supabase
+        .from("investments")
+        .select("*")
+        .eq("userId", userId)
+        .order("createdAt", { ascending: false });
+      if (error) throw error;
+      return (data as any) || [];
+    }
     const { investments } = getCollections();
     return (await investments.find({ userId }).sort({ createdAt: -1 }).toArray()) as any;
   });
@@ -417,6 +604,16 @@ export async function updateInvestmentAsync(
   updates: Partial<Investment>,
 ): Promise<Investment | null> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data, error } = await supabase
+        .from("investments")
+        .update(updates as any)
+        .eq("id", investmentId)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data as any;
+    }
     const { investments } = getCollections();
     const res = await investments.findOneAndUpdate(
       { id: investmentId },
@@ -434,6 +631,13 @@ export const getAllUsers = (): User[] => {
 
 export async function getAllUsersAsync(): Promise<User[]> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data, error } = await supabase
+        .from("users")
+        .select("id,email,phone,firstName,lastName,kycStatus,status,role,createdAt,lastLogin");
+      if (error) throw error;
+      return ((data as any[]) || []).map((u) => u as User);
+    }
     const { users } = getCollections();
     const rows = await users.find({}).toArray();
     return rows.map(({ password, _id, ...u }: any) => u as User);
@@ -446,6 +650,13 @@ export const getUserCount = (): number => {
 
 export async function getUserCountAsync(): Promise<number> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { count, error } = await supabase
+        .from("users")
+        .select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count || 0;
+    }
     const { users } = getCollections();
     return (await users.countDocuments({})) || 0;
   });
@@ -457,6 +668,13 @@ export const getTotalAUM = (): number => {
 
 export async function getTotalAUMAsync(): Promise<number> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data, error } = await supabase
+        .from("wallets")
+        .select("totalInvested");
+      if (error) throw error;
+      return ((data as any[]) || []).reduce((sum, r: any) => sum + (r.totalInvested || 0), 0);
+    }
     const { wallets } = getCollections();
     const agg = await wallets.aggregate([
       { $group: { _id: null, total: { $sum: "$totalInvested" } } },
@@ -471,6 +689,14 @@ export const getActiveInvestmentCount = (): number => {
 
 export async function getActiveInvestmentCountAsync(): Promise<number> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { count, error } = await supabase
+        .from("investments")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active");
+      if (error) throw error;
+      return count || 0;
+    }
     const { investments } = getCollections();
     return (await investments.countDocuments({ status: "active" })) || 0;
   });
@@ -482,6 +708,14 @@ export const getPendingKYCCount = (): number => {
 
 export async function getPendingKYCCountAsync(): Promise<number> {
   return withInit(async () => {
+    if (useSupabase) {
+      const { count, error } = await supabase
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("kycStatus", "pending");
+      if (error) throw error;
+      return count || 0;
+    }
     const { users } = getCollections();
     return (await users.countDocuments({ kycStatus: "pending" })) || 0;
   });
@@ -787,10 +1021,31 @@ export async function createNotificationAsync(notificationData: {
   metadata?: any;
 }) {
   return withInit(async () => {
-    const { notifications } = getCollections();
     const notificationId = randomUUID();
     const now = new Date().toISOString();
 
+    if (useSupabase) {
+      const { error } = await supabase.from("notifications").insert({
+        id: notificationId,
+        userId: notificationData.userId,
+        title: notificationData.title,
+        message: notificationData.message,
+        type: notificationData.type,
+        priority: notificationData.priority || "normal",
+        metadata: notificationData.metadata || null,
+        createdAt: now,
+        read: false,
+      });
+      if (error) throw error;
+      return {
+        id: notificationId,
+        ...notificationData,
+        read: false,
+        createdAt: now,
+      };
+    }
+
+    const { notifications } = getCollections();
     await notifications.insertOne({
       id: notificationId,
       userId: notificationData.userId,
@@ -826,6 +1081,17 @@ export async function getUserNotificationsFromDBAsync(
   unreadOnly: boolean = false,
 ) {
   return withInit(async () => {
+    if (useSupabase) {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("userId", userId)
+        .eq(unreadOnly ? "read" : "userId", unreadOnly ? false : userId)
+        .order("createdAt", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data as any[]) || [];
+    }
     const { notifications } = getCollections();
     const query = unreadOnly ? { userId, read: false } : { userId };
     const rows = await notifications.find(query).sort({ createdAt: -1 }).limit(limit).toArray();

@@ -76,6 +76,7 @@ export const register: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error",
+      details: process.env.NODE_ENV !== "production" ? (error instanceof Error ? error.message : (typeof error === 'object' ? JSON.stringify(error) : String(error))) : undefined,
     } as ErrorResponse);
   }
 };

@@ -254,7 +254,9 @@ export function createServer() {
   );
   app.post("/auth/login", authRateLimit, validateSchema(loginSchema), login);
   app.post("/auth/logout", logout);
-  app.get("/auth/me", getCurrentUser);
+  app.get("/auth/me", authenticateToken, (req, res) => {
+    res.json({ success: true, user: req.user });
+  });
 
   // OTP routes (public with rate limiting)
   app.post("/otp/send", otpRateLimit, validateNigerianPhone, sendOTP);

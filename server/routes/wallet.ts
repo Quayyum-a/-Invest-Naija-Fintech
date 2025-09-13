@@ -320,7 +320,7 @@ export const getDashboardData: RequestHandler = async (req, res) => {
 
     const wallet = await getUserWallet(userId);
     const recentTransactions = await getUserTransactions(userId, 5);
-    const recentInvestments = await getUserInvestments(userId).slice(0, 3);
+    const recentInvestments = (await getUserInvestments(userId)).slice(0, 3);
 
     if (!wallet) {
       return res.status(404).json({
